@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Funcionamiento de los aparatos de la nutrición</title>
+<style>
+  /* ====== Reset & base ====== */
+  * { box-sizing: border-box; margin:0; padding:0; }
+  :root{
+    --blue:#001DFF;
+    --blue-dark:#04032B;
+    --blue-700:#1a3a5f;
+    --blue-600:#254fba;
+    --orange:#f59e42;
+    --orange-700:#e67e22;
+    --bg-grad-1:#1a3a5f;
+    --bg-grad-2:#0d2340;
+    --white:#ffffff;
+    --green:#2ecc71;
+    --red:#e74c3c;
+    --panel:#E8EAFF;
+  }
+  body{
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+    min-height:100vh; display:flex; justify-content:center; align-items:center; color:#333; padding:10px;
+  }
+  .game-container{
+    background:var(--white); border-radius:16px; box-shadow:0 12px 24px rgba(0,0,0,.12);
+    padding:1.2rem; max-width:980px; width:100%; min-height:640px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  header{ text-align:center; margin-bottom:.8rem; margin-top:2rem; }
+  h1{ color:var(--blue); font-size:clamp(2rem,5.2vw,3.1rem); font-weight:900; letter-spacing:.5px; }
+  .subtitle{ color:var(--blue-700); font-size:clamp(1rem,3.5vw,1.25rem); margin-top:.25rem; }
+  .highlight-keyword{ color:var(--orange); font-weight:800; }
+
+  .btn{ color:#fff; border:none; padding:.75rem 1.2rem; border-radius:10px; cursor:pointer; font-weight:800;
+        transition:transform .08s ease, box-shadow .2s ease, background-color .25s ease; min-width:140px; height:48px;
+        display:inline-flex; align-items:center; justify-content:center; }
+  .btn:hover{ transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); }
+  .btn:active{ transform:translateY(0); }
+  .btn-primary{ background:var(--orange); }
+  .btn-primary:hover{ background:var(--orange-700); }
+  .btn-blue{ background:var(--blue-600); }
+  .btn-blue:hover{ filter:brightness(.9); }
+  .btn-ghost{ background:#e6f2ff; color:var(--blue-700); }
+
+  .screen{ display:none; animation:fadeIn .35s ease; }
+  .screen.active{ display:block; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+
+  .game-info{ display:flex; gap:.6rem; align-items:center; justify-content:space-between; margin:.4rem 0 1rem; flex-wrap:wrap; }
+  .timer{ font-weight:900; color:var(--blue-700); font-size:clamp(.95rem,2.3vw,1.15rem); }
+  .progress-bar{ flex:1; height:10px; background:#e6f2ff; border-radius:999px; overflow:hidden; }
+  .progress-fill{ height:100%; width:0%; background:linear-gradient(90deg, var(--orange) 0%, var(--orange-700) 100%); transition:width .3s ease; }
+  .score{ font-weight:900; color:var(--blue-700); font-size:clamp(.9rem,2.3vw,1.1rem); }
+
+  .start-content{ display:flex; flex-direction:column; justify-content:center; align-items:center; flex:1; gap:1rem; padding:1rem; }
+  .advice-box{ background:var(--panel); border-left:4px solid var(--blue-700); padding:1rem 1.2rem; border-radius:12px;
+               color:var(--blue-700); max-width:760px; text-align:center; font-size:clamp(1rem,3vw,1.15rem); }
+  .start-image{ max-width: 300px; width: 100%; margin: 0 auto; }
+
+  .mute-btn{ position:absolute; top:.8rem; right:4.5rem; background:var(--orange); color:#fff; border:2px solid #fff; width:38px; height:38px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; z-index:20; }
+  .mute-btn:hover{ background:var(--orange-700); }
+  .help-btn{ position:absolute; top:.8rem; right:.8rem; width:38px; height:38px; border-radius:50%; border:none; background:#9c27b0; color:#fff; font-weight:800; cursor:pointer; z-index:20; }
+
+  .board{ display:grid; grid-template-columns:1fr; gap:.8rem; align-items:start; }
+  .panel{ background:#f8fbff; border:2px solid #d3e2ff; border-radius:12px; padding:.7rem .9rem; display:flex; align-items:center; justify-content:space-between; gap:.8rem; }
+  .word-display-container{ display:flex; align-items:center; justify-content:center; gap:0.5rem; flex:1; }
+  .word-display{ font-size:clamp(1.2rem,4.5vw,1.8rem); font-weight:900; color:var(--blue-700); text-align:center; }
+
+  .startGameArea{ display:flex; gap:.6rem; align-items:center; justify-content:center; margin-top:.4rem; }
+  .btn-start-inline{ display:inline-flex; }
+
+  .stage{ background:#fff; border-radius:12px; border:2px solid #e6f2ff; padding:.6rem; box-shadow: inset 0 0 0 1px #f3f7ff; }
+  .img-wrap{ position:relative; width:100%; max-width:680px; margin:0 auto; }
+  .img-wrap img{ display:block; width:100%; height:auto; border-radius:10px; user-select:none; -webkit-user-drag:none; }
+
+  /* Estilos para las tarjetas de ordenamiento */
+  .cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  
+  .card {
+    background: #f8fbff;
+    border: 2px solid #d3e2ff;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+  }
+  
+  .card-content {
+    flex: 1;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    line-height: 1.4;
+  }
+  
+  .card-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  
+  .arrow-btn {
+    background: var(--blue-600);
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .arrow-btn:hover {
+    background: var(--blue-700);
+  }
+  
+  .arrow-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .card.correct {
+    border-color: var(--green);
+    background: rgba(46, 204, 113, 0.1);
+  }
+  
+  .card.incorrect {
+    border-color: var(--red);
+    background: rgba(231, 76, 60, 0.1);
+  }
+  
+  .card.selected {
+    box-shadow: 0 0 0 3px var(--orange);
+  }
+  
+  /* Estilos para los botones de opción */
+  .options-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+  
+  .option-btn {
+    background: var(--blue-600);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.2rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    transition: all 0.2s;
+  }
+  
+  .option-btn:hover {
+    background: var(--blue-700);
+    transform: translateY(-2px);
+  }
+  
+  .option-btn.correct {
+    background: var(--green);
+  }
+  
+  .option-btn.incorrect {
+    background: var(--red);
+  }
+  
+  .function-card {
+    background: #f8fbff;
+    border: 2px solid #d3e2ff;
+    border-radius: 12px;
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: clamp(1.1rem, 2.8vw, 1.3rem);
+    line-height: 1.5;
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+
+  /* Estilos de la pantalla de resultados */
+  .results{ display:flex; flex-direction:column; align-items:center; gap:.6rem; text-align:center; min-height:calc(100vh - 180px); }
+  .final-title{ color:var(--blue-dark); font-weight:900; }
+  .big-score{ font-size:clamp(2.2rem,6vw,3.4rem); color:var(--blue-600); font-weight:900; }
+  .score-title{ font-size:1.0rem; color:var(--blue-700); margin-top:1rem; }
+  .final-time{ color:var(--blue-700); }
+  .trophy{ font-size:clamp(4rem,10vw,6rem); margin:.2rem 0; color:var(--orange); animation:bounce 1s ease infinite; }
+  @keyframes bounce { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-8px);} }
+  .credit{ color:var(--blue-700); margin-top:1rem; }
+
+  /* Tamaño del mensaje final */
+  #finalMsg {
+    font-size: clamp(1.6rem, 3.8vw, 2.4rem);
+    font-weight: 800;
+    color: var(--blue-700);
+    margin-top: 0.6rem;
+  }
+
+  /* Estilos para el logo del colegio en la pantalla final */
+  .school-logo {
+    display: block;
+    width: 160px;
+    max-width: 28%;
+    height: auto;
+    margin-top: 0.8rem;
+    border-radius: 8px;
+    object-fit: contain;
+  }
+
+  /* Ajustes responsivos para móviles */
+  @media (max-width: 899px) {
+    .school-logo { width: 140px; max-width: 160px; }
+  }
+  @media (max-width: 420px) {
+    .school-logo { width: 110px; max-width: 40%; margin-top: 0.6rem; }
+    .results { gap: 0.4rem; padding: 0 0.6rem; }
+    #finalMsg { font-size: clamp(1.2rem, 4.2vw, 1.8rem); }
+    .big-score { font-size: clamp(1.8rem, 6vw, 2.6rem); }
+  }
+  @media (max-width: 320px) {
+    .school-logo { width: 90px; max-width: 48%; }
+    #finalMsg { font-size: clamp(1.1rem, 4.6vw, 1.6rem); }
+  }
+
+  .confetti{ position:fixed; width:10px; height:10px; border-radius:50%; animation: confetti-fall 3s linear forwards; z-index:999; }
+  @keyframes confetti-fall{ 0%{ transform:translate(0, -20px) rotate(0); opacity:1;} 100%{ transform:translate(var(--tx), var(--ty)) rotate(360deg); opacity:0; } }
+
+  .loading-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none; /* Inicialmente oculto */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    flex-direction: column;
+  }
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--orange);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .loading-text {
+    color: white;
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  @media (min-width:900px){ .board{ grid-template-columns: 360px 1fr; align-items:start; } .panel{ order:1; } .stage{ order:2; } }
+  @media (max-width:899px){
+    header{ margin-top:1.6rem; }
+    .board{ grid-template-columns:1fr; }
+    .panel{ display:flex; flex-direction:row; align-items:center; justify-content:space-between; padding:.6rem; }
+    .word-display-container{ order:0; width:100%; margin-bottom:.6rem; }
+    .stage{ order:1; }
+  }
+  @media (max-width:420px){ .btn{ min-width:110px; padding:.6rem .9rem; height:44px; } }
+
+  /* Nuevo estilo para el consejo, centrado y en dos líneas */
+  .advice-box .advice-text {
+      display: block;
+  }
+  .advice-box strong {
+      display: block;
+      margin-top: 0.5rem;
+      text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="game-container">
+  <button class="mute-btn" id="muteBtn" title="Silenciar/Activar sonido">🔊</button>
+
+  <section class="screen active" id="startScreen" aria-labelledby="title">
+    <header>
+      <h1 id="title">Funcionamiento de los aparatos de la nutrición</h1>
+      <div class="subtitle">Ordena las frases para explicar el funcionamiento de los aparatos de la nutrición.</div>
+    </header>
+    <div class="start-content">
+      <div class="advice-box" role="note" aria-live="polite">
+        <span class="advice-text">Usa las <span class="highlight-keyword">flechas de selección</span> para <span class="highlight-keyword">ordenar</span> las fases y procesos del funcionamiento de los aparatos de la nutrición.</span>
+        <strong>¡Buena suerte!</strong>
+      </div>
+      <button class="btn btn-primary" id="playBtn">Comenzar</button>
+      <img class="start-image" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/Ni%C3%B1os.png" alt="Niños aprendiendo">
+    </div>
+  </section>
+
+  <section class="screen" id="gameScreen">
+    <button class="help-btn" id="helpBtn" title="Ayuda">?</button>
+    <header>
+      <h1 id="gameTitle">Aparato digestivo</h1>
+      <div class="subtitle" id="gameSubtitle">Ordena el proceso de digestión.</div>
+    </header>
+    <div class="game-info">
+      <div class="timer" id="timer">00:00</div>
+      <div class="progress-bar" aria-label="Progreso"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="score">Puntuación: <span id="score">0</span>/100</div>
+    </div>
+
+    <div class="board">
+      <div class="panel" aria-live="polite">
+        <div class="word-display-container" id="wordDisplayContainer">
+          <div class="word-display" id="wordDisplay">—</div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div id="gameContent">
+          <!-- El contenido del juego se cargará dinámicamente aquí -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="resultsScreen">
+    <header>
+      <h1 class="final-title" style="color:var(--blue-dark);">Funcionamiento de los aparatos de la nutrición</h1>
+    </header>
+    <div class="results">
+      <div id="trophyBox" style="display:none;">
+        <div class="trophy">🏆</div>
+      </div>
+      <div class="score-title">Puntuación</div>
+      <div class="big-score" id="finalScore">0</div>
+      <div class="final-time">Tiempo: <span id="finalTime">00:00</span></div>
+      <div id="finalMsg" class="subtitle"></div>
+      <button class="btn btn-primary" id="backToMenuBtn" style="background:var(--orange);">Volver al menú</button>
+      <span class="credit">Creado por Manuel J. Ventura</span>
+      <img class="school-logo" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Siurot.png" alt="Logo del colegio" />
+    </div>
+  </section>
+</div>
+
+<div class="loading-indicator" id="loadingIndicator">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Cargando imágenes...</div>
+</div>
+
+<div id="helpModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:100; justify-content:center; align-items:center; padding:1rem;">
+  <div style="background:#fff; border-radius:12px; max-width:680px; width:100%; padding:1.2rem 1.2rem; box-shadow:0 10px 24px rgba(0,0,0,.2);">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:.5rem; margin-bottom:.8rem;">
+      <h3 style="color:var(--blue-700);">Cómo jugar</h3>
+      <button class="btn-ghost" id="closeHelp" style="border-radius:8px; padding:.4rem .7rem; height:auto; min-width:auto;">Cerrar</button>
+    </div>
+    <div style="line-height:1.55; color:#333;">
+      <p><strong style="color: #001A73; font-weight: bold;">Usa las flechas</strong> para ordenar las tarjetas en la secuencia correcta. Cuando estés listo, pulsa <strong style="color: #001A73; font-weight: bold;">Comprobar</strong> para verificar tus respuestas.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/************** Data **************/
+const DELAY_AFTER_ANSWER = 500; // 0.5 segundos
+
+/* Datos de los sistemas */
+const SYSTEMS_DATA = [
+  {
+    id: 'digestivo',
+    title: 'Aparato digestivo',
+    subtitle: 'Ordena el proceso de digestión.',
+    type: 'order',
+    content: [
+      'El alimento entra en la boca , con los dientes y  la saliva, se forma el bolo alimenticio',
+      'El bolo alimenticio pasa por el esófago y llega al estómago',
+      'El bolo alimenticio se mezcla con los jugos del estómago y se convierte en una papilla.',
+      'La papilla pasa al intestino y se mezcla con los jugos del hígado y del páncreas y se separan los nutrientes',
+      'Los nutrientes pasan a la sangre y los desechos se convierten en heces',
+      'Las heces se expulsan por el ano'
+    ]
+  },
+  {
+    id: 'respiratorio',
+    title: 'Aparato respiratorio',
+    subtitle: 'Ordena el proceso de respiración.',
+    type: 'order',
+    content: [
+      'Inspiración: el aire entre por las fosas nasales',
+      'El aire pasa por la faringe, la traquea, los bronquios y llega a los pulmones',
+      'Intercambio de gases: el oxígeno pasa a la sangre y el dióxido de carbono (CO<sub>2</sub>) pasa al aire',
+      'Expiración: el dióxido de carbono (CO<sub>2</sub>) sale de los pulmones y se expulsa al exterior'
+    ]
+  },
+  {
+    id: 'circulatorio',
+    title: 'Aparato circulatorio',
+    subtitle: 'Define los elementos del aparato circulatorio.',
+    type: 'match',
+    content: [
+      { function: 'Está formado por el corazón, los vasos sanguíneos y la sangre', element: 'Aparato circulatorio' },
+      { function: 'Bombea la sangre a través de los vasos sanguíneos', element: 'Corazón' },
+      { function: 'Conductos por los que circula la sangre', element: 'Vasos sanguíneos' },
+      { function: 'Trasnporta nutrientes y recoge desechos', element: 'Sangre' }
+    ]
+  },
+  {
+    id: 'excretor',
+    title: 'Aparato excretor',
+    subtitle: 'Ordena el funcionamiento del proceso urinario.',
+    type: 'order',
+    content: [
+      'La sangre entra en los riñones',
+      'Los riñones limpian la sangre y con los desechos forma la orina',
+      'La orina baja por los uréteres y se almacena en la vejiga',
+      'La orina se expulsa mediante la uretra'
+    ]
+  }
+];
+
+// Mapeo de audios de efectos
+const soundFiles = {
+  completed: 'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Completado.mp3',
+  correct:   'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Correcto.mp3',
+  victory:   'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Termin%C3%A9.mp3',
+  error:     'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Error.mp3',
+  tap:       'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Tap.mp3'
+};
+let sounds = {}; // Inicializado en el evento click
+let isMuted = false;
+let audioUnlocked = false;
+let userInteracted = false;
+
+const el = (id)=>document.getElementById(id);
+const progressFill = el('progressFill');
+const timerEl = el('timer');
+const scoreEl = el('score');
+const loadingIndicator = el('loadingIndicator');
+const gameContent = el('gameContent');
+const gameTitle = el('gameTitle');
+const gameSubtitle = el('gameSubtitle');
+
+let systemsOrder = []; // Orden aleatorio de los sistemas
+let currentSystemIndex = 0; // Índice del sistema actual
+let answeredQuestions = 0; // Contador de preguntas respondidas correctamente
+let totalQuestions = 0; // Total de preguntas en todos los sistemas
+let timerInt = null; 
+let elapsed = 0;
+let mode = 'start'; // Estado inicial
+
+// Calcular el total de preguntas
+SYSTEMS_DATA.forEach(system => {
+  if (system.type === 'order') {
+    totalQuestions += system.content.length;
+  } else if (system.type === 'match') {
+    totalQuestions += system.content.length;
+  }
+});
+
+function fmtTime(s){ 
+  const m=Math.floor(s/60).toString().padStart(2,'0'); 
+  const ss=(s%60).toString().padStart(2,'0'); 
+  return `${m}:${ss}`; 
+}
+
+function startTimer(){ 
+  clearInterval(timerInt); 
+  timerInt = setInterval(()=>{ 
+    elapsed++; 
+    timerEl.textContent = fmtTime(elapsed); 
+  },1000); 
+}
+
+function stopTimer(){ 
+  clearInterval(timerInt); 
+}
+
+function updateProgress(){ 
+  const pct = (currentSystemIndex / SYSTEMS_DATA.length)*100; 
+  const score = Math.round((answeredQuestions/totalQuestions)*100);
+  progressFill.style.width = pct + '%'; 
+  scoreEl.textContent = score;
+}
+
+function beginPlay(){
+  mode='play';
+  
+  // Generar orden aleatorio para los sistemas
+  systemsOrder = shuffle([...Array(SYSTEMS_DATA.length).keys()]);
+  currentSystemIndex = 0;
+  answeredQuestions = 0;
+  updateProgress();
+  
+  elapsed = 0;
+  timerEl.textContent = '00:00';
+  startTimer();
+  
+  // Cargar el primer sistema
+  loadSystem(systemsOrder[currentSystemIndex]);
+}
+
+function loadSystem(systemIndex) {
+  const system = SYSTEMS_DATA[systemIndex];
+  
+  // Actualizar título y subtítulo
+  gameTitle.textContent = system.title;
+  gameSubtitle.textContent = system.subtitle;
+  
+  // Limpiar contenido anterior
+  gameContent.innerHTML = '';
+  
+  // Cargar contenido según el tipo
+  if (system.type === 'order') {
+    loadOrderSystem(system);
+  } else if (system.type === 'match') {
+    loadMatchSystem(system);
+  }
+}
+
+function loadOrderSystem(system) {
+  // Crear contenedor de tarjetas
+  const cardsContainer = document.createElement('div');
+  cardsContainer.className = 'cards-container';
+  
+  // Crear un array con índices y desordenarlo
+  const indices = [...Array(system.content.length).keys()];
+  const shuffledIndices = shuffle(indices);
+  
+  // Crear tarjetas desordenadas
+  shuffledIndices.forEach((originalIndex, currentIndex) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.originalIndex = originalIndex;
+    card.dataset.currentIndex = currentIndex;
+    
+    const cardContent = document.createElement('div');
+    cardContent.className = 'card-content';
+    cardContent.textContent = system.content[originalIndex];
+    
+    const cardControls = document.createElement('div');
+    cardControls.className = 'card-controls';
+    
+    // Flecha arriba
+    const upBtn = document.createElement('button');
+    upBtn.className = 'arrow-btn';
+    upBtn.innerHTML = '↑';
+    upBtn.disabled = currentIndex === 0;
+    upBtn.addEventListener('click', () => moveCardUp(card));
+    
+    // Flecha abajo
+    const downBtn = document.createElement('button');
+    downBtn.className = 'arrow-btn';
+    downBtn.innerHTML = '↓';
+    downBtn.disabled = currentIndex === shuffledIndices.length - 1;
+    downBtn.addEventListener('click', () => moveCardDown(card));
+    
+    cardControls.appendChild(upBtn);
+    cardControls.appendChild(downBtn);
+    
+    card.appendChild(cardContent);
+    card.appendChild(cardControls);
+    
+    cardsContainer.appendChild(card);
+  });
+  
+  gameContent.appendChild(cardsContainer);
+  
+  // Crear botón de comprobación
+  const actionButtons = document.createElement('div');
+  actionButtons.className = 'action-buttons';
+  
+  const checkBtn = document.createElement('button');
+  checkBtn.className = 'btn btn-primary';
+  checkBtn.textContent = 'Comprobar';
+  checkBtn.addEventListener('click', checkOrder);
+  
+  actionButtons.appendChild(checkBtn);
+  gameContent.appendChild(actionButtons);
+}
+
+function loadMatchSystem(system) {
+  // Crear un array con índices y desordenarlo
+  const indices = [...Array(system.content.length).keys()];
+  const shuffledIndices = shuffle(indices);
+  let currentMatchIndex = 0;
+  
+  // Crear tarjeta de función
+  const functionCard = document.createElement('div');
+  functionCard.className = 'function-card';
+  functionCard.textContent = system.content[shuffledIndices[currentMatchIndex]].function;
+  
+  // Crear contenedor de opciones
+  const optionsContainer = document.createElement('div');
+  optionsContainer.className = 'options-container';
+  
+  // Crear botones de opción
+  const options = ['Aparato circulatorio', 'Corazón', 'Vasos sanguíneos', 'Sangre'];
+  options.forEach(option => {
+    const optionBtn = document.createElement('button');
+    optionBtn.className = 'option-btn';
+    optionBtn.textContent = option;
+    optionBtn.addEventListener('click', () => checkMatch(option, system.content[shuffledIndices[currentMatchIndex]].element, optionBtn));
+    optionsContainer.appendChild(optionBtn);
+  });
+  
+  gameContent.appendChild(functionCard);
+  gameContent.appendChild(optionsContainer);
+}
+
+function moveCardUp(card) {
+  reproducirSonidoTap();
+  
+  const currentIndex = parseInt(card.dataset.currentIndex);
+  if (currentIndex === 0) return;
+  
+  const cards = Array.from(document.querySelectorAll('.card'));
+  const prevCard = cards.find(c => parseInt(c.dataset.currentIndex) === currentIndex - 1);
+  
+  // Intercambiar posiciones
+  card.dataset.currentIndex = currentIndex - 1;
+  prevCard.dataset.currentIndex = currentIndex;
+  
+  // Reordenar en el DOM
+  const parent = card.parentNode;
+  const cardPrev = card.previousElementSibling;
+  parent.insertBefore(card, cardPrev);
+  
+  // Actualizar estado de los botones
+  updateArrowButtons();
+  
+  // Resaltar la tarjeta movida
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+}
+
+function moveCardDown(card) {
+  reproducirSonidoTap();
+  
+  const currentIndex = parseInt(card.dataset.currentIndex);
+  const cards = Array.from(document.querySelectorAll('.card'));
+  if (currentIndex === cards.length - 1) return;
+  
+  const nextCard = cards.find(c => parseInt(c.dataset.currentIndex) === currentIndex + 1);
+  
+  // Intercambiar posiciones
+  card.dataset.currentIndex = currentIndex + 1;
+  nextCard.dataset.currentIndex = currentIndex;
+  
+  // Reordenar en el DOM
+  const parent = card.parentNode;
+  const cardNext = card.nextElementSibling;
+  parent.insertBefore(nextCard, card);
+  
+  // Actualizar estado de los botones
+  updateArrowButtons();
+  
+  // Resaltar la tarjeta movida
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+}
+
+function updateArrowButtons() {
+  const cards = Array.from(document.querySelectorAll('.card'));
+  
+  cards.forEach((card, index) => {
+    const upBtn = card.querySelector('.arrow-btn:first-child');
+    const downBtn = card.querySelector('.arrow-btn:last-child');
+    
+    upBtn.disabled = index === 0;
+    downBtn.disabled = index === cards.length - 1;
+  });
+}
+
+function checkOrder() {
+  reproducirSonidoTap();
+  
+  const cards = Array.from(document.querySelectorAll('.card'));
+  let allCorrect = true;
+  
+  // Verificar si todas las tarjetas están en su lugar correcto
+  cards.forEach(card => {
+    const originalIndex = parseInt(card.dataset.originalIndex);
+    const currentIndex = parseInt(card.dataset.currentIndex);
+    
+    if (originalIndex === currentIndex) {
+      card.classList.add('correct');
+      card.classList.remove('incorrect');
+    } else {
+      card.classList.add('incorrect');
+      card.classList.remove('correct');
+      allCorrect = false;
+    }
+  });
+  
+  if (allCorrect) {
+    reproducirSonidoCorrecto();
+    answeredQuestions += cards.length;
+    updateProgress();
+    
+    // Deshabilitar botones
+    document.querySelectorAll('.arrow-btn').forEach(btn => btn.disabled = true);
+    
+    // Pasar a la siguiente pantalla después de 1 segundo
+    setTimeout(() => {
+      nextSystem();
+    }, 1000);
+  } else {
+    reproducirSonidoError();
+    
+    // Mostrar botón continuar
+    const actionButtons = document.querySelector('.action-buttons');
+    
+    // Verificar si ya existe el botón continuar
+    if (!document.getElementById('continueBtn')) {
+      const continueBtn = document.createElement('button');
+      continueBtn.id = 'continueBtn';
+      continueBtn.className = 'btn btn-blue';
+      continueBtn.textContent = 'Continuar';
+      continueBtn.addEventListener('click', () => {
+        reproducirSonidoTap();
+        nextSystem();
+      });
+      
+      actionButtons.appendChild(continueBtn);
+    }
+  }
+}
+
+function checkMatch(selectedOption, correctOption, buttonElement) {
+  // Deshabilitar todos los botones temporalmente
+  document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+  
+  if (selectedOption === correctOption) {
+    reproducirSonidoCorrecto();
+    buttonElement.classList.add('correct');
+    answeredQuestions++;
+    updateProgress();
+    
+    // Pasar a la siguiente tarjeta después de 0.5 segundos
+    setTimeout(() => {
+      nextMatch();
+    }, 500);
+  } else {
+    reproducirSonidoError();
+    buttonElement.classList.add('incorrect');
+    
+    // Pasar a la siguiente tarjeta después de 0.5 segundos
+    setTimeout(() => {
+      nextMatch();
+    }, 500);
+  }
+}
+
+function nextMatch() {
+  const system = SYSTEMS_DATA[systemsOrder[currentSystemIndex]];
+  const functionCard = document.querySelector('.function-card');
+  const optionsContainer = document.querySelector('.options-container');
+  
+  // Incrementar el índice de la coincidencia actual
+  let currentMatchIndex = 0;
+  const indices = [...Array(system.content.length).keys()];
+  const shuffledIndices = shuffle(indices);
+  
+  // Buscar el índice actual basado en el texto de la tarjeta de función
+  for (let i = 0; i < shuffledIndices.length; i++) {
+    if (system.content[shuffledIndices[i]].function === functionCard.textContent) {
+      currentMatchIndex = i;
+      break;
+    }
+  }
+  
+  currentMatchIndex++;
+  
+  if (currentMatchIndex < system.content.length) {
+    // Actualizar tarjeta de función
+    functionCard.textContent = system.content[shuffledIndices[currentMatchIndex]].function;
+    
+    // Restablecer botones de opción
+    optionsContainer.innerHTML = '';
+    
+    // Crear botones de opción
+    const options = ['Aparato circulatorio', 'Corazón', 'Vasos sanguíneos', 'Sangre'];
+    options.forEach(option => {
+      const optionBtn = document.createElement('button');
+      optionBtn.className = 'option-btn';
+      optionBtn.textContent = option;
+      optionBtn.addEventListener('click', () => checkMatch(option, system.content[shuffledIndices[currentMatchIndex]].element, optionBtn));
+      optionsContainer.appendChild(optionBtn);
+    });
+  } else {
+    // Se han completado todas las coincidencias, pasar al siguiente sistema
+    nextSystem();
+  }
+}
+
+function nextSystem() {
+  currentSystemIndex++;
+  if (currentSystemIndex >= systemsOrder.length) {
+    // Fin del juego
+    finishGame(); 
+  } else {
+    // Cargar siguiente sistema
+    loadSystem(systemsOrder[currentSystemIndex]);
+  }
+}
+
+function finishGame(){ 
+  stopTimer(); 
+  const score = Math.round((answeredQuestions/totalQuestions)*100);
+  el('gameScreen').classList.remove('active'); 
+  el('resultsScreen').classList.add('active');
+  
+  el('finalScore').textContent = score; 
+  el('finalTime').textContent = fmtTime(elapsed);
+  el('trophyBox').style.display = (score===100) ? 'block' : 'none';
+  
+  if(score===100){ 
+    el('finalMsg').textContent = '¡Enhorabuena, puntuación máxima!';
+    reproducirSonidoVictoria(); 
+    spawnConfetti(); 
+  } else { 
+    el('finalMsg').textContent = '¡Buen trabajo! Sigue practicando';
+    reproducirSonidoCompletado(); 
+  }
+  mode = 'finished';
+}
+
+function shuffle(a){ 
+  const arr=[...a]; 
+  for(let i=arr.length-1;i>0;i--){ 
+    const j=Math.floor(Math.random()*(i+1)); 
+    [arr[i],arr[j]]=[arr[j],arr[i]]; 
+  } 
+  return arr; 
+}
+
+/**
+ * Función de Confeti
+ */
+function spawnConfetti(){
+  for(let i=0;i<120;i++){
+    setTimeout(()=>{
+      const c=document.createElement('div');
+      c.className='confetti';
+      const x=Math.random()*window.innerWidth;
+      const ty=window.innerHeight+20;
+      const tx=(Math.random()-.5)*160;
+      const colors=['#ff595e','#1982c4','#6a4c93','#ffca3a','#8ac926','#ff924c','#00c2ff'];
+      c.style.left=x+'px';
+      c.style.top='-10px';
+      c.style.backgroundColor=colors[Math.floor(Math.random()*colors.length)];
+      const size=6+Math.random()*8;
+      c.style.width=size+'px';
+      c.style.height=size+'px';
+      c.style.setProperty('--tx', tx+'px');
+      c.style.setProperty('--ty', ty+'px');
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(), 3200);
+    }, i*18);
+  }
+}
+
+function gotoStart(){
+  el('resultsScreen').classList.remove('active'); 
+  el('gameScreen').classList.remove('active'); 
+  el('startScreen').classList.add('active');
+  systemsOrder=[]; 
+  currentSystemIndex=0;
+  answeredQuestions=0; 
+  elapsed=0; 
+  timerEl.textContent='00:00'; 
+  progressFill.style.width='0%'; 
+  scoreEl.textContent='0'; 
+  mode='start';
+}
+
+/**
+ * Inicializa los audios de efectos. Se llama al pulsar Comenzar.
+ */
+function initializeEffectAudios() {
+  if(Object.keys(sounds).length > 0) return; // Ya inicializado
+  Object.entries(soundFiles).forEach(([k, url])=>{
+    const a = new Audio();
+    a.src = url;
+    a.preload = 'auto';
+    a.crossOrigin = 'anonymous';
+    sounds[k] = a;
+  });
+}
+
+/**
+ * Intenta desbloquear el Web Audio API. Se llama al pulsar Comenzar.
+ */
+function unlockAudio(){
+  if (audioUnlocked) return;
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g);
+    g.connect(ctx.destination);
+    g.gain.value = 0.0001; // Volumen casi cero
+    o.start();
+    o.stop(ctx.currentTime + 0.02);
+    audioUnlocked = true;
+  } catch(e){
+    console.warn("Web Audio API no disponible o error al desbloquear:", e);
+    audioUnlocked = true;
+  }
+}
+
+/**
+ * Reproduce un sonido de efecto.
+ */
+function play(name){
+  if(isMuted) return;
+  const a = sounds[name];
+  if(!a) return;
+  try{
+    a.currentTime = 0;
+    const p = a.play();
+    if (p && p.catch) p.catch(err => console.warn('Reproducción de efecto fallida (no-fatal):', err));
+  } catch(e){
+    console.warn('Audio play error:', e);
+  }
+}
+
+function reproducirSonidoCorrecto(){ play('correct'); }
+function reproducirSonidoError(){ play('error'); }
+function reproducirSonidoCompletado(){ play('completed'); }
+function reproducirSonidoVictoria(){ play('victory'); }
+function reproducirSonidoTap(){ play('tap'); }
+
+/* --- Event Listeners --- */
+
+el('playBtn').addEventListener('click', ()=>{
+  userInteracted = true;
+  
+  // 1. Unlocked Audio
+  unlockAudio();
+  initializeEffectAudios();
+  reproducirSonidoTap();
+
+  // 2. Start Game
+  el('startScreen').classList.remove('active');
+  el('gameScreen').classList.add('active');
+  beginPlay();
+});
+
+el('backToMenuBtn').addEventListener('click', ()=>{
+  reproducirSonidoTap();
+  gotoStart();
+});
+
+el('helpBtn').addEventListener('click', ()=>{
+  reproducirSonidoTap();
+  el('helpModal').style.display='flex';
+});
+el('closeHelp').addEventListener('click', ()=>{
+  reproducirSonidoTap();
+  el('helpModal').style.display='none';
+});
+el('helpModal').addEventListener('click', (e)=>{
+  if(e.target===el('helpModal')) el('helpModal').style.display='none';
+});
+
+el('muteBtn').addEventListener('click', ()=>{
+  isMuted = !isMuted;
+  el('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+  // Si está activado, reproduce un tap para confirmar
+  if (!isMuted && userInteracted) { reproducirSonidoTap(); }
+});
+
+// Ocultar el indicador de carga si el HTML lo dejaba visible.
+document.addEventListener('DOMContentLoaded', () => {
+    loadingIndicator.style.display = 'none';
+});
+</script>
+</body>
+</html>
