@@ -32,7 +32,7 @@
     display:flex; flex-direction:column;
   }
   header{ text-align:center; margin-bottom:.8rem; margin-top:2rem; }
-  h1{ color:var(--blue); font-size:clamp(2rem,5.2vw,3.1rem); font-weight:900; letter-spacing:.5px; }
+  h1{ color:var(--blue-dark); font-size:clamp(2rem,5.2vw,3.1rem); font-weight:900; letter-spacing:.5px; }
   .subtitle{ color:var(--blue-700); font-size:clamp(1rem,3.5vw,1.25rem); margin-top:.25rem; }
   .highlight-keyword{ color:var(--orange); font-weight:800; }
 
@@ -66,17 +66,9 @@
   .mute-btn:hover{ background:var(--orange-700); }
   .help-btn{ position:absolute; top:.8rem; right:.8rem; width:38px; height:38px; border-radius:50%; border:none; background:#9c27b0; color:#fff; font-weight:800; cursor:pointer; z-index:20; }
 
-  .board{ display:grid; grid-template-columns:1fr; gap:.8rem; align-items:start; }
-  .panel{ background:#f8fbff; border:2px solid #d3e2ff; border-radius:12px; padding:.7rem .9rem; display:flex; align-items:center; justify-content:space-between; gap:.8rem; }
-  .word-display-container{ display:flex; align-items:center; justify-content:center; gap:0.5rem; flex:1; }
-  .word-display{ font-size:clamp(1.2rem,4.5vw,1.8rem); font-weight:900; color:var(--blue-700); text-align:center; }
-
-  .startGameArea{ display:flex; gap:.6rem; align-items:center; justify-content:center; margin-top:.4rem; }
-  .btn-start-inline{ display:inline-flex; }
-
-  .stage{ background:#fff; border-radius:12px; border:2px solid #e6f2ff; padding:.6rem; box-shadow: inset 0 0 0 1px #f3f7ff; }
-  .img-wrap{ position:relative; width:100%; max-width:680px; margin:0 auto; }
-  .img-wrap img{ display:block; width:100%; height:auto; border-radius:10px; user-select:none; -webkit-user-drag:none; }
+  /* El .board ya no es necesario con el panel lateral */
+  .stage{ background:#fff; border-radius:12px; border:2px solid #e6f2ff; padding:.6rem; box-shadow: inset 0 0 0 1px #f3f7ff; flex:1; display:flex; flex-direction:column; }
+  #gameContent { flex: 1; display: flex; flex-direction: column; }
 
   /* Estilos para las tarjetas de ordenamiento */
   .cards-container {
@@ -92,7 +84,7 @@
     background: #f8fbff;
     border: 2px solid #d3e2ff;
     border-radius: 12px;
-    padding: 1rem;
+    padding: 0.7rem 0.8rem; /* Padding vertical reducido para altura de tarjeta */
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -101,37 +93,42 @@
   
   .card-content {
     flex: 1;
-    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    font-size: clamp(1rem, 2.5vw, 1.2rem); /* Tamaño de fuente original restaurado */
     line-height: 1.4;
+    padding-right: 1rem; /* Espacio extra entre el texto y los botones */
   }
   
   .card-controls {
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
+    width: 36px; /* Ancho fijo para alinear los botones */
+    align-items: center; /* Centrar los botones en el contenedor */
+    flex-shrink: 0; /* Evitar que se encoja el contenedor */
   }
   
   .arrow-btn {
-    background: var(--blue-600);
-    color: white;
-    border: none;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    background: var(--orange); /* Fondo naranja */
+    color: white; /* Color del triángulo */
+    border: none; /* Sin borde */
+    width: 36px; /* Mismo tamaño que el botón original */
+    height: 36px; /* Mismo tamaño que el botón original (cuadrado) */
+    border-radius: 8px; /* Bordes ligeramente redondeados para un look moderno */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s ease; /* Transición suave para el hover */
+    font-size: 18px; /* Tamaño del triángulo */
   }
   
-  .arrow-btn:hover {
-    background: var(--blue-700);
+  .arrow-btn:hover:not(:disabled) {
+    background: var(--orange-700); /* Oscurecer en hover */
   }
   
   .arrow-btn:disabled {
-    background: #ccc;
     cursor: not-allowed;
+    opacity: 0.5; /* Más transparente cuando está deshabilitado */
   }
   
   .card.correct {
@@ -248,8 +245,8 @@
 
   .loading-indicator {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 0,
+    left: 0,
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.7);
@@ -278,13 +275,8 @@
     text-align: center;
   }
 
-  @media (min-width:900px){ .board{ grid-template-columns: 360px 1fr; align-items:start; } .panel{ order:1; } .stage{ order:2; } }
   @media (max-width:899px){
     header{ margin-top:1.6rem; }
-    .board{ grid-template-columns:1fr; }
-    .panel{ display:flex; flex-direction:row; align-items:center; justify-content:space-between; padding:.6rem; }
-    .word-display-container{ order:0; width:100%; margin-bottom:.6rem; }
-    .stage{ order:1; }
   }
   @media (max-width:420px){ .btn{ min-width:110px; padding:.6rem .9rem; height:44px; } }
 
@@ -330,17 +322,9 @@
       <div class="score">Puntuación: <span id="score">0</span>/100</div>
     </div>
 
-    <div class="board">
-      <div class="panel" aria-live="polite">
-        <div class="word-display-container" id="wordDisplayContainer">
-          <div class="word-display" id="wordDisplay">—</div>
-        </div>
-      </div>
-
-      <div class="stage">
-        <div id="gameContent">
-          <!-- El contenido del juego se cargará dinámicamente aquí -->
-        </div>
+    <div class="stage">
+      <div id="gameContent">
+        <!-- El contenido del juego se cargará dinámicamente aquí -->
       </div>
     </div>
   </section>
@@ -409,8 +393,8 @@ const SYSTEMS_DATA = [
     content: [
       'Inspiración: el aire entre por las fosas nasales',
       'El aire pasa por la faringe, la traquea, los bronquios y llega a los pulmones',
-      'Intercambio de gases: el oxígeno pasa a la sangre y el dióxido de carbono (CO<sub>2</sub>) pasa al aire',
-      'Expiración: el dióxido de carbono (CO<sub>2</sub>) sale de los pulmones y se expulsa al exterior'
+      'Intercambio de gases: el oxígeno pasa a la sangre y el dióxido de carbono (CO₂) pasa al aire',
+      'Expiración: el dióxido de carbono (CO₂) sale de los pulmones y se expulsa al exterior'
     ]
   },
   {
@@ -545,7 +529,12 @@ function loadOrderSystem(system) {
   
   // Crear un array con índices y desordenarlo
   const indices = [...Array(system.content.length).keys()];
-  const shuffledIndices = shuffle(indices);
+  let shuffledIndices = shuffle(indices);
+  
+  // Asegurar que ninguna tarjeta esté en su lugar correcto inicialmente
+  while (shuffledIndices.every((val, idx) => val === idx)) {
+    shuffledIndices = shuffle(indices);
+  }
   
   // Crear tarjetas desordenadas
   shuffledIndices.forEach((originalIndex, currentIndex) => {
@@ -564,14 +553,14 @@ function loadOrderSystem(system) {
     // Flecha arriba
     const upBtn = document.createElement('button');
     upBtn.className = 'arrow-btn';
-    upBtn.innerHTML = '↑';
+    upBtn.innerHTML = '▲'; // Triángulo blanco hacia arriba
     upBtn.disabled = currentIndex === 0;
     upBtn.addEventListener('click', () => moveCardUp(card));
     
     // Flecha abajo
     const downBtn = document.createElement('button');
     downBtn.className = 'arrow-btn';
-    downBtn.innerHTML = '↓';
+    downBtn.innerHTML = '▼'; // Triángulo blanco hacia abajo
     downBtn.disabled = currentIndex === shuffledIndices.length - 1;
     downBtn.addEventListener('click', () => moveCardDown(card));
     
@@ -603,12 +592,16 @@ function loadMatchSystem(system) {
   // Crear un array con índices y desordenarlo
   const indices = [...Array(system.content.length).keys()];
   const shuffledIndices = shuffle(indices);
-  let currentMatchIndex = 0;
+  
+  // Guardar el orden y el índice actual en el contexto del sistema
+  system.currentMatchIndex = 0;
+  system.shuffledIndices = shuffledIndices;
   
   // Crear tarjeta de función
   const functionCard = document.createElement('div');
   functionCard.className = 'function-card';
-  functionCard.textContent = system.content[shuffledIndices[currentMatchIndex]].function;
+  // Usar innerHTML para interpretar la etiqueta <sub>
+  functionCard.innerHTML = system.content[shuffledIndices[system.currentMatchIndex]].function;
   
   // Crear contenedor de opciones
   const optionsContainer = document.createElement('div');
@@ -620,7 +613,7 @@ function loadMatchSystem(system) {
     const optionBtn = document.createElement('button');
     optionBtn.className = 'option-btn';
     optionBtn.textContent = option;
-    optionBtn.addEventListener('click', () => checkMatch(option, system.content[shuffledIndices[currentMatchIndex]].element, optionBtn));
+    optionBtn.addEventListener('click', () => checkMatch(option, system.content[shuffledIndices[system.currentMatchIndex]].element, optionBtn, system));
     optionsContainer.appendChild(optionBtn);
   });
   
@@ -747,7 +740,7 @@ function checkOrder() {
   }
 }
 
-function checkMatch(selectedOption, correctOption, buttonElement) {
+function checkMatch(selectedOption, correctOption, buttonElement, system) {
   // Deshabilitar todos los botones temporalmente
   document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
   
@@ -756,47 +749,28 @@ function checkMatch(selectedOption, correctOption, buttonElement) {
     buttonElement.classList.add('correct');
     answeredQuestions++;
     updateProgress();
-    
-    // Pasar a la siguiente tarjeta después de 0.5 segundos
-    setTimeout(() => {
-      nextMatch();
-    }, 500);
   } else {
     reproducirSonidoError();
     buttonElement.classList.add('incorrect');
-    
-    // Pasar a la siguiente tarjeta después de 0.5 segundos
-    setTimeout(() => {
-      nextMatch();
-    }, 500);
   }
+  
+  // Pasar a la siguiente tarjeta después de 0.5 segundos
+  setTimeout(() => {
+    nextMatch(system);
+  }, 500);
 }
 
-function nextMatch() {
-  const system = SYSTEMS_DATA[systemsOrder[currentSystemIndex]];
-  const functionCard = document.querySelector('.function-card');
-  const optionsContainer = document.querySelector('.options-container');
+function nextMatch(system) {
+  system.currentMatchIndex++;
   
-  // Incrementar el índice de la coincidencia actual
-  let currentMatchIndex = 0;
-  const indices = [...Array(system.content.length).keys()];
-  const shuffledIndices = shuffle(indices);
-  
-  // Buscar el índice actual basado en el texto de la tarjeta de función
-  for (let i = 0; i < shuffledIndices.length; i++) {
-    if (system.content[shuffledIndices[i]].function === functionCard.textContent) {
-      currentMatchIndex = i;
-      break;
-    }
-  }
-  
-  currentMatchIndex++;
-  
-  if (currentMatchIndex < system.content.length) {
+  if (system.currentMatchIndex < system.content.length) {
     // Actualizar tarjeta de función
-    functionCard.textContent = system.content[shuffledIndices[currentMatchIndex]].function;
+    const functionCard = document.querySelector('.function-card');
+    // Usar innerHTML para interpretar la etiqueta <sub>
+    functionCard.innerHTML = system.content[system.shuffledIndices[system.currentMatchIndex]].function;
     
     // Restablecer botones de opción
+    const optionsContainer = document.querySelector('.options-container');
     optionsContainer.innerHTML = '';
     
     // Crear botones de opción
@@ -805,7 +779,7 @@ function nextMatch() {
       const optionBtn = document.createElement('button');
       optionBtn.className = 'option-btn';
       optionBtn.textContent = option;
-      optionBtn.addEventListener('click', () => checkMatch(option, system.content[shuffledIndices[currentMatchIndex]].element, optionBtn));
+      optionBtn.addEventListener('click', () => checkMatch(option, system.content[system.shuffledIndices[system.currentMatchIndex]].element, optionBtn, system));
       optionsContainer.appendChild(optionBtn);
     });
   } else {
