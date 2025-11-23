@@ -1,975 +1,1628 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Funcionamiento de los aparatos de la nutrición</title>
-<style>
-  /* ====== Reset & base ====== */
-  * { box-sizing: border-box; margin:0; padding:0; }
-  :root{
-    --blue:#001DFF;
-    --blue-dark:#04032B;
-    --blue-700:#1a3a5f;
-    --blue-600:#254fba;
-    --orange:#f59e42;
-    --orange-700:#e67e22;
-    --bg-grad-1:#1a3a5f;
-    --bg-grad-2:#0d2340;
-    --white:#ffffff;
-    --green:#2ecc71;
-    --red:#e74c3c;
-    --panel:#E8EAFF;
-  }
-  body{
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
-    min-height:100vh; display:flex; justify-content:center; align-items:center; color:#333; padding:10px;
-  }
-  .game-container{
-    background:var(--white); border-radius:16px; box-shadow:0 12px 24px rgba(0,0,0,.12);
-    padding:1.2rem; max-width:980px; width:100%; min-height:640px; position:relative; overflow:hidden;
-    display:flex; flex-direction:column;
-  }
-  header{ text-align:center; margin-bottom:.8rem; margin-top:2rem; }
-  h1{ color:var(--blue-dark); font-size:clamp(2rem,5.2vw,3.1rem); font-weight:900; letter-spacing:.5px; }
-  .subtitle{ color:var(--blue-700); font-size:clamp(1rem,3.5vw,1.25rem); margin-top:.25rem; }
-  .highlight-keyword{ color:var(--orange); font-weight:800; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Funcionamiento de los aparatos de la nutrición</title>
+  <style>
+    /* --- ESTILOS DEL MODAL --- */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
 
-  .btn{ color:#fff; border:none; padding:.75rem 1.2rem; border-radius:10px; cursor:pointer; font-weight:800;
-        transition:transform .08s ease, box-shadow .2s ease, background-color .25s ease; min-width:140px; height:48px;
-        display:inline-flex; align-items:center; justify-content:center; }
-  .btn:hover{ transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); }
-  .btn:active{ transform:translateY(0); }
-  .btn-primary{ background:var(--orange); }
-  .btn-primary:hover{ background:var(--orange-700); }
-  .btn-blue{ background:var(--blue-600); }
-  .btn-blue:hover{ filter:brightness(.9); }
-  .btn-ghost{ background:#e6f2ff; color:var(--blue-700); }
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 0.3s ease;
+    }
 
-  .screen{ display:none; animation:fadeIn .35s ease; }
-  .screen.active{ display:block; }
-  @keyframes fadeIn{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+    .modal-title {
+      color: var(--blue);
+      /* Color principal de tu juego */
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
 
-  .game-info{ display:flex; gap:.6rem; align-items:center; justify-content:space-between; margin:.4rem 0 1rem; flex-wrap:wrap; }
-  .timer{ font-weight:900; color:var(--blue-700); font-size:clamp(.95rem,2.3vw,1.15rem); }
-  .progress-bar{ flex:1; height:10px; background:#e6f2ff; border-radius:999px; overflow:hidden; }
-  .progress-fill{ height:100%; width:0%; background:linear-gradient(90deg, var(--orange) 0%, var(--orange-700) 100%); transition:width .3s ease; }
-  .score{ font-weight:900; color:var(--blue-700); font-size:clamp(.9rem,2.3vw,1.1rem); }
+    .modal-info {
+      margin-bottom: 1.5rem;
+      color: var(--blue-700);
+      font-weight: 600;
+    }
 
-  .start-content{ display:flex; flex-direction:column; justify-content:center; align-items:center; flex:1; gap:1rem; padding:1rem; }
-  .advice-box{ background:var(--panel); border-left:4px solid var(--blue-700); padding:1rem 1.2rem; border-radius:12px;
-               color:var(--blue-700); max-width:760px; text-align:center; font-size:clamp(1rem,3vw,1.15rem); }
-  .start-image{ max-width: 300px; width: 100%; margin: 0 auto; }
+    .form-group {
+      margin-bottom: 1rem;
+    }
 
-  .mute-btn{ position:absolute; top:.8rem; right:4.5rem; background:var(--orange); color:#fff; border:2px solid #fff; width:38px; height:38px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; z-index:20; }
-  .mute-btn:hover{ background:var(--orange-700); }
-  .help-btn{ position:absolute; top:.8rem; right:.8rem; width:38px; height:38px; border-radius:50%; border:none; background:#9c27b0; color:#fff; font-weight:800; cursor:pointer; z-index:20; }
-
-  /* El .board ya no es necesario con el panel lateral */
-  .stage{ background:#fff; border-radius:12px; border:2px solid #e6f2ff; padding:.6rem; box-shadow: inset 0 0 0 1px #f3f7ff; flex:1; display:flex; flex-direction:column; }
-  #gameContent { flex: 1; display: flex; flex-direction: column; }
-
-  /* Estilos para las tarjetas de ordenamiento */
-  .cards-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-    max-width: 800px;
-    margin: 0 auto;
-    width: 100%;
-  }
-  
-  .card {
-    background: #f8fbff;
-    border: 2px solid #d3e2ff;
-    border-radius: 12px;
-    padding: 0.7rem 0.8rem; /* Padding vertical reducido para altura de tarjeta */
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: all 0.3s ease;
-  }
-  
-  .card-content {
-    flex: 1;
-    font-size: clamp(1rem, 2.5vw, 1.2rem); /* Tamaño de fuente original restaurado */
-    line-height: 1.4;
-    padding-right: 1rem; /* Espacio extra entre el texto y los botones */
-  }
-  
-  .card-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    width: 36px; /* Ancho fijo para alinear los botones */
-    align-items: center; /* Centrar los botones en el contenedor */
-    flex-shrink: 0; /* Evitar que se encoja el contenedor */
-  }
-  
-  .arrow-btn {
-    background: var(--orange); /* Fondo naranja */
-    color: white; /* Color del triángulo */
-    border: none; /* Sin borde */
-    width: 36px; /* Mismo tamaño que el botón original */
-    height: 36px; /* Mismo tamaño que el botón original (cuadrado) */
-    border-radius: 8px; /* Bordes ligeramente redondeados para un look moderno */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.2s ease; /* Transición suave para el hover */
-    font-size: 18px; /* Tamaño del triángulo */
-  }
-  
-  .arrow-btn:hover:not(:disabled) {
-    background: var(--orange-700); /* Oscurecer en hover */
-  }
-  
-  .arrow-btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.5; /* Más transparente cuando está deshabilitado */
-  }
-  
-  .card.correct {
-    border-color: var(--green);
-    background: rgba(46, 204, 113, 0.1);
-  }
-  
-  .card.incorrect {
-    border-color: var(--red);
-    background: rgba(231, 76, 60, 0.1);
-  }
-  
-  .card.selected {
-    box-shadow: 0 0 0 3px var(--orange);
-  }
-  
-  /* Estilos para los botones de opción */
-  .options-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    justify-content: center;
-    margin-top: 1.5rem;
-  }
-  
-  .option-btn {
-    background: var(--blue-600);
-    color: white;
-    border: none;
-    padding: 0.8rem 1.2rem;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: clamp(0.9rem, 2vw, 1.1rem);
-    transition: all 0.2s;
-  }
-  
-  .option-btn:hover {
-    background: var(--blue-700);
-    transform: translateY(-2px);
-  }
-  
-  .option-btn.correct {
-    background: var(--green);
-  }
-  
-  .option-btn.incorrect {
-    background: var(--red);
-  }
-  
-  .function-card {
-    background: #f8fbff;
-    border: 2px solid #d3e2ff;
-    border-radius: 12px;
-    padding: 1.2rem;
-    margin-bottom: 1.5rem;
-    text-align: center;
-    font-size: clamp(1.1rem, 2.8vw, 1.3rem);
-    line-height: 1.5;
-  }
-  
-  .action-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin-top: 1.5rem;
-  }
-
-  /* Estilos de la pantalla de resultados */
-  .results{ display:flex; flex-direction:column; align-items:center; gap:.6rem; text-align:center; min-height:calc(100vh - 180px); }
-  .final-title{ color:var(--blue-dark); font-weight:900; }
-  .big-score{ font-size:clamp(2.2rem,6vw,3.4rem); color:var(--blue-600); font-weight:900; }
-  .score-title{ font-size:1.0rem; color:var(--blue-700); margin-top:1rem; }
-  .final-time{ color:var(--blue-700); }
-  .trophy{ font-size:clamp(4rem,10vw,6rem); margin:.2rem 0; color:var(--orange); animation:bounce 1s ease infinite; }
-  @keyframes bounce { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-8px);} }
-  .credit{ color:var(--blue-700); margin-top:1rem; }
-
-  /* Tamaño del mensaje final */
-  #finalMsg {
-    font-size: clamp(1.6rem, 3.8vw, 2.4rem);
-    font-weight: 800;
-    color: var(--blue-700);
-    margin-top: 0.6rem;
-  }
-
-  /* Estilos para el logo del colegio en la pantalla final */
-  .school-logo {
-    display: block;
-    width: 160px;
-    max-width: 28%;
-    height: auto;
-    margin-top: 0.8rem;
-    border-radius: 8px;
-    object-fit: contain;
-  }
-
-  /* Ajustes responsivos para móviles */
-  @media (max-width: 899px) {
-    .school-logo { width: 140px; max-width: 160px; }
-  }
-  @media (max-width: 420px) {
-    .school-logo { width: 110px; max-width: 40%; margin-top: 0.6rem; }
-    .results { gap: 0.4rem; padding: 0 0.6rem; }
-    #finalMsg { font-size: clamp(1.2rem, 4.2vw, 1.8rem); }
-    .big-score { font-size: clamp(1.8rem, 6vw, 2.6rem); }
-  }
-  @media (max-width: 320px) {
-    .school-logo { width: 90px; max-width: 48%; }
-    #finalMsg { font-size: clamp(1.1rem, 4.6vw, 1.6rem); }
-  }
-
-  .confetti{ position:fixed; width:10px; height:10px; border-radius:50%; animation: confetti-fall 3s linear forwards; z-index:999; }
-  @keyframes confetti-fall{ 0%{ transform:translate(0, -20px) rotate(0); opacity:1;} 100%{ transform:translate(var(--tx), var(--ty)) rotate(360deg); opacity:0; } }
-
-  .loading-indicator {
-    position: fixed;
-    top: 0,
-    left: 0,
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: none; /* Inicialmente oculto */
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    flex-direction: column;
-  }
-  .loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid var(--orange);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
-  }
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  .loading-text {
-    color: white;
-    font-size: 1.2rem;
-    text-align: center;
-  }
-
-  @media (max-width:899px){
-    header{ margin-top:1.6rem; }
-  }
-  @media (max-width:420px){ .btn{ min-width:110px; padding:.6rem .9rem; height:44px; } }
-
-  /* Nuevo estilo para el consejo, centrado y en dos líneas */
-  .advice-box .advice-text {
+    .form-label {
       display: block;
-  }
-  .advice-box strong {
+      margin-bottom: 0.5rem;
+      color: var(--blue-700);
+      font-weight: 600;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.7rem;
+      border: 2px solid #d3e2ff;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--blue-600);
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+
+    /* ====== Reset & base ====== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --blue: #001DFF;
+      --blue-dark: #04032B;
+      --blue-700: #1a3a5f;
+      --blue-600: #254fba;
+      --orange: #f59e42;
+      --orange-700: #e67e22;
+      --bg-grad-1: #1a3a5f;
+      --bg-grad-2: #0d2340;
+      --white: #ffffff;
+      --green: #2ecc71;
+      --red: #e74c3c;
+      --panel: #E8EAFF;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+      padding: 10px;
+    }
+
+    .game-container {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, .12);
+      padding: 1.2rem;
+      max-width: 980px;
+      width: 100%;
+      min-height: 640px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: .8rem;
+      margin-top: 2rem;
+    }
+
+    h1 {
+      color: var(--blue-dark);
+      font-size: clamp(2rem, 5.2vw, 3.1rem);
+      font-weight: 900;
+      letter-spacing: .5px;
+    }
+
+    .subtitle {
+      color: var(--blue-700);
+      font-size: clamp(1rem, 3.5vw, 1.25rem);
+      margin-top: .25rem;
+    }
+
+    .highlight-keyword {
+      color: var(--orange);
+      font-weight: 800;
+    }
+
+    .btn {
+      color: #fff;
+      border: none;
+      padding: .75rem 1.2rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform .08s ease, box-shadow .2s ease, background-color .25s ease;
+      min-width: 140px;
+      height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, .12);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: var(--orange);
+    }
+
+    .btn-primary:hover {
+      background: var(--orange-700);
+    }
+
+    .btn-blue {
+      background: var(--blue-600);
+    }
+
+    .btn-blue:hover {
+      filter: brightness(.9);
+    }
+
+    .btn-ghost {
+      background: #e6f2ff;
+      color: var(--blue-700);
+    }
+
+    .screen {
+      display: none;
+      animation: fadeIn .35s ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .game-info {
+      display: flex;
+      gap: .6rem;
+      align-items: center;
+      justify-content: space-between;
+      margin: .4rem 0 1rem;
+      flex-wrap: wrap;
+    }
+
+    .timer {
+      font-weight: 900;
+      color: var(--blue-700);
+      font-size: clamp(.95rem, 2.3vw, 1.15rem);
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 10px;
+      background: #e6f2ff;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--orange) 0%, var(--orange-700) 100%);
+      transition: width .3s ease;
+    }
+
+    .score {
+      font-weight: 900;
+      color: var(--blue-700);
+      font-size: clamp(.9rem, 2.3vw, 1.1rem);
+    }
+
+    .start-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .advice-box {
+      background: var(--panel);
+      border-left: 4px solid var(--blue-700);
+      padding: 1rem 1.2rem;
+      border-radius: 12px;
+      color: var(--blue-700);
+      max-width: 760px;
+      text-align: center;
+      font-size: clamp(1rem, 3vw, 1.15rem);
+    }
+
+    .start-image {
+      max-width: 300px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .mute-btn {
+      position: absolute;
+      top: .8rem;
+      right: 4.5rem;
+      background: var(--orange);
+      color: #fff;
+      border: 2px solid #fff;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+
+    .mute-btn:hover {
+      background: var(--orange-700);
+    }
+
+    .help-btn {
+      position: absolute;
+      top: .8rem;
+      right: .8rem;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: #9c27b0;
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+      z-index: 20;
+    }
+
+    /* El .board ya no es necesario con el panel lateral */
+    .stage {
+      background: #fff;
+      border-radius: 12px;
+      border: 2px solid #e6f2ff;
+      padding: .6rem;
+      box-shadow: inset 0 0 0 1px #f3f7ff;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #gameContent {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Estilos para las tarjetas de ordenamiento */
+    .cards-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .card {
+      background: #f8fbff;
+      border: 2px solid #d3e2ff;
+      border-radius: 12px;
+      padding: 0.7rem 0.8rem;
+      /* Padding vertical reducido para altura de tarjeta */
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+    }
+
+    .card-content {
+      flex: 1;
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      /* Tamaño de fuente original restaurado */
+      line-height: 1.4;
+      padding-right: 1rem;
+      /* Espacio extra entre el texto y los botones */
+    }
+
+    .card-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      width: 36px;
+      /* Ancho fijo para alinear los botones */
+      align-items: center;
+      /* Centrar los botones en el contenedor */
+      flex-shrink: 0;
+      /* Evitar que se encoja el contenedor */
+    }
+
+    .arrow-btn {
+      background: var(--orange);
+      /* Fondo naranja */
+      color: white;
+      /* Color del triángulo */
+      border: none;
+      /* Sin borde */
+      width: 36px;
+      /* Mismo tamaño que el botón original */
+      height: 36px;
+      /* Mismo tamaño que el botón original (cuadrado) */
+      border-radius: 8px;
+      /* Bordes ligeramente redondeados para un look moderno */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      /* Transición suave para el hover */
+      font-size: 18px;
+      /* Tamaño del triángulo */
+    }
+
+    .arrow-btn:hover:not(:disabled) {
+      background: var(--orange-700);
+      /* Oscurecer en hover */
+    }
+
+    .arrow-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      /* Más transparente cuando está deshabilitado */
+    }
+
+    .card.correct {
+      border-color: var(--green);
+      background: rgba(46, 204, 113, 0.1);
+    }
+
+    .card.incorrect {
+      border-color: var(--red);
+      background: rgba(231, 76, 60, 0.1);
+    }
+
+    .card.selected {
+      box-shadow: 0 0 0 3px var(--orange);
+    }
+
+    /* Estilos para los botones de opción */
+    .options-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+
+    .option-btn {
+      background: var(--blue-600);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.2rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      transition: all 0.2s;
+    }
+
+    .option-btn:hover {
+      background: var(--blue-700);
+      transform: translateY(-2px);
+    }
+
+    .option-btn.correct {
+      background: var(--green);
+    }
+
+    .option-btn.incorrect {
+      background: var(--red);
+    }
+
+    .function-card {
+      background: #f8fbff;
+      border: 2px solid #d3e2ff;
+      border-radius: 12px;
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-size: clamp(1.1rem, 2.8vw, 1.3rem);
+      line-height: 1.5;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+
+    /* Estilos de la pantalla de resultados */
+    .results {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .6rem;
+      text-align: center;
+      min-height: calc(100vh - 180px);
+    }
+
+    .final-title {
+      color: var(--blue-dark);
+      font-weight: 900;
+    }
+
+    .big-score {
+      font-size: clamp(2.2rem, 6vw, 3.4rem);
+      color: var(--blue-600);
+      font-weight: 900;
+    }
+
+    .score-title {
+      font-size: 1.0rem;
+      color: var(--blue-700);
+      margin-top: 1rem;
+    }
+
+    .final-time {
+      color: var(--blue-700);
+    }
+
+    .trophy {
+      font-size: clamp(4rem, 10vw, 6rem);
+      margin: .2rem 0;
+      color: var(--orange);
+      animation: bounce 1s ease infinite;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    .credit {
+      color: var(--blue-700);
+      margin-top: 1rem;
+    }
+
+    /* Tamaño del mensaje final */
+    #finalMsg {
+      font-size: clamp(1.6rem, 3.8vw, 2.4rem);
+      font-weight: 800;
+      color: var(--blue-700);
+      margin-top: 0.6rem;
+    }
+
+    /* Estilos para el logo del colegio en la pantalla final */
+    .school-logo {
+      display: block;
+      width: 160px;
+      max-width: 28%;
+      height: auto;
+      margin-top: 0.8rem;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+
+    /* Ajustes responsivos para móviles */
+    @media (max-width: 899px) {
+      .school-logo {
+        width: 140px;
+        max-width: 160px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .school-logo {
+        width: 110px;
+        max-width: 40%;
+        margin-top: 0.6rem;
+      }
+
+      .results {
+        gap: 0.4rem;
+        padding: 0 0.6rem;
+      }
+
+      #finalMsg {
+        font-size: clamp(1.2rem, 4.2vw, 1.8rem);
+      }
+
+      .big-score {
+        font-size: clamp(1.8rem, 6vw, 2.6rem);
+      }
+    }
+
+    @media (max-width: 320px) {
+      .school-logo {
+        width: 90px;
+        max-width: 48%;
+      }
+
+      #finalMsg {
+        font-size: clamp(1.1rem, 4.6vw, 1.6rem);
+      }
+    }
+
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      animation: confetti-fall 3s linear forwards;
+      z-index: 999;
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        transform: translate(0, -20px) rotate(0);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(var(--tx), var(--ty)) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    .loading-indicator {
+      position: fixed;
+      top: 0,
+        left: 0,
+        width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      /* Inicialmente oculto */
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      flex-direction: column;
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid var(--orange);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text {
+      color: white;
+      font-size: 1.2rem;
+      text-align: center;
+    }
+
+    @media (max-width:899px) {
+      header {
+        margin-top: 1.6rem;
+      }
+    }
+
+    @media (max-width:420px) {
+      .btn {
+        min-width: 110px;
+        padding: .6rem .9rem;
+        height: 44px;
+      }
+    }
+
+    /* Nuevo estilo para el consejo, centrado y en dos líneas */
+    .advice-box .advice-text {
+      display: block;
+    }
+
+    .advice-box strong {
       display: block;
       margin-top: 0.5rem;
       text-align: center;
-  }
-</style>
+    }
+
+    /* --- ESTILOS DEL HALL OF FAME --- */
+    .hall-of-fame {
+      background: var(--panel);
+      /* Usa una variable de color de fondo de tu juego */
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .hall-of-fame-title {
+      color: var(--blue-700);
+      /* Usa una variable de color de texto de tu juego */
+      font-weight: 800;
+      font-size: 1.2rem;
+      text-align: center;
+      margin-bottom: 0.8rem;
+    }
+
+    .hall-of-fame-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .hall-of-fame-table th {
+      background: var(--blue-600);
+      /* Usa una variable de color de acento de tu juego */
+      color: white;
+      padding: 0.5rem;
+      text-align: left;
+    }
+
+    .hall-of-fame-table td {
+      padding: 0.4rem 0.5rem;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .hall-of-fame-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .hall-of-fame-table tr:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .hall-of-fame-error,
+    .hall-of-fame-loading {
+      padding: 1rem;
+      text-align: center;
+      color: var(--blue-700);
+      font-style: italic;
+    }
+
+    .hall-of-fame-error {
+      color: var(--red);
+      /* Usa una variable de color de error de tu juego */
+    }
+  </style>
 </head>
+
 <body>
-<div class="game-container">
-  <button class="mute-btn" id="muteBtn" title="Silenciar/Activar sonido">🔊</button>
+  <div class="game-container">
+    <button class="mute-btn" id="muteBtn" title="Silenciar/Activar sonido">🔊</button>
 
-  <section class="screen active" id="startScreen" aria-labelledby="title">
-    <header>
-      <h1 id="title">Funcionamiento de los aparatos de la nutrición</h1>
-      <div class="subtitle">Ordena las frases para explicar el funcionamiento de los aparatos de la nutrición.</div>
-    </header>
-    <div class="start-content">
-      <div class="advice-box" role="note" aria-live="polite">
-        <span class="advice-text">Usa las <span class="highlight-keyword">flechas de selección</span> para <span class="highlight-keyword">ordenar</span> las fases y procesos del funcionamiento de los aparatos de la nutrición.</span>
-        <strong>¡Buena suerte!</strong>
+    <section class="screen active" id="startScreen" aria-labelledby="title">
+      <header>
+        <h1 id="title">Funcionamiento de los aparatos de la nutrición</h1>
+        <div class="subtitle">Ordena las frases para explicar el funcionamiento de los aparatos de la nutrición.</div>
+      </header>
+      <div class="start-content">
+        <div class="advice-box" role="note" aria-live="polite">
+          <span class="advice-text">Usa las <span class="highlight-keyword">flechas de selección</span> para <span
+              class="highlight-keyword">ordenar</span> las fases y procesos del funcionamiento de los aparatos de la
+            nutrición.</span>
+          <strong>¡Buena suerte!</strong>
+        </div>
+        <button class="btn btn-primary" id="playBtn">Comenzar</button>
+        <!-- Hall of Fame -->
+        <div class="hall-of-fame" id="hallOfFame">
+          <div class="hall-of-fame-title">🏆 Mejores puntuaciones 🏆</div>
+          <table class="hall-of-fame-table">
+            <thead>
+              <tr>
+                <th>Posición</th>
+                <th>Nombre</th>
+                <th>Puntos</th>
+                <th>Tiempo</th>
+              </tr>
+            </thead>
+            <tbody id="hofTableBody">
+              <!-- Aquí se cargarán las puntuaciones dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+        <img class="start-image"
+          src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/Ni%C3%B1os.png"
+          alt="Niños aprendiendo">
       </div>
-      <button class="btn btn-primary" id="playBtn">Comenzar</button>
-      <img class="start-image" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/Ni%C3%B1os.png" alt="Niños aprendiendo">
-    </div>
-  </section>
+    </section>
 
-  <section class="screen" id="gameScreen">
-    <button class="help-btn" id="helpBtn" title="Ayuda">?</button>
-    <header>
-      <h1 id="gameTitle">Aparato digestivo</h1>
-      <div class="subtitle" id="gameSubtitle">Ordena el proceso de digestión.</div>
-    </header>
-    <div class="game-info">
-      <div class="timer" id="timer">00:00</div>
-      <div class="progress-bar" aria-label="Progreso"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="score">Puntuación: <span id="score">0</span>/100</div>
-    </div>
-
-    <div class="stage">
-      <div id="gameContent">
-        <!-- El contenido del juego se cargará dinámicamente aquí -->
+    <section class="screen" id="gameScreen">
+      <button class="help-btn" id="helpBtn" title="Ayuda">?</button>
+      <header>
+        <h1 id="gameTitle">Aparato digestivo</h1>
+        <div class="subtitle" id="gameSubtitle">Ordena el proceso de digestión.</div>
+      </header>
+      <div class="game-info">
+        <div class="timer" id="timer">00:00</div>
+        <div class="progress-bar" aria-label="Progreso">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="score">Puntuación: <span id="score">0</span>/100</div>
       </div>
-    </div>
-  </section>
 
-  <section class="screen" id="resultsScreen">
-    <header>
-      <h1 class="final-title" style="color:var(--blue-dark);">Funcionamiento de los aparatos de la nutrición</h1>
-    </header>
-    <div class="results">
-      <div id="trophyBox" style="display:none;">
-        <div class="trophy">🏆</div>
+      <div class="stage">
+        <div id="gameContent">
+          <!-- El contenido del juego se cargará dinámicamente aquí -->
+        </div>
       </div>
-      <div class="score-title">Puntuación</div>
-      <div class="big-score" id="finalScore">0</div>
-      <div class="final-time">Tiempo: <span id="finalTime">00:00</span></div>
-      <div id="finalMsg" class="subtitle"></div>
-      <button class="btn btn-primary" id="backToMenuBtn" style="background:var(--orange);">Volver al menú</button>
-      <span class="credit">Creado por Manuel J. Ventura</span>
-      <img class="school-logo" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Siurot.png" alt="Logo del colegio" />
-    </div>
-  </section>
-</div>
+    </section>
 
-<div class="loading-indicator" id="loadingIndicator">
-  <div class="loading-spinner"></div>
-  <div class="loading-text">Cargando imágenes...</div>
-</div>
+    <section class="screen" id="resultsScreen">
+      <header>
+        <h1 class="final-title" style="color:var(--blue-dark);">Funcionamiento de los aparatos de la nutrición</h1>
+      </header>
+      <div class="results">
+        <div id="trophyBox" style="display:none;">
+          <div class="trophy">🏆</div>
+        </div>
+        <div class="score-title">Puntuación</div>
+        <div class="big-score" id="finalScore">0</div>
+        <div class="final-time">Tiempo: <span id="finalTime">00:00</span></div>
+        <div id="finalMsg" class="subtitle"></div>
+        <button class="btn btn-primary" id="backToMenuBtn" style="background:var(--orange);">Volver al menú</button>
+        <span class="credit">Creado por Manuel J. Ventura</span>
+        <img class="school-logo" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Siurot.png"
+          alt="Logo del colegio" />
+      </div>
+    </section>
+  </div>
 
-<div id="helpModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:100; justify-content:center; align-items:center; padding:1rem;">
-  <div style="background:#fff; border-radius:12px; max-width:680px; width:100%; padding:1.2rem 1.2rem; box-shadow:0 10px 24px rgba(0,0,0,.2);">
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:.5rem; margin-bottom:.8rem;">
-      <h3 style="color:var(--blue-700);">Cómo jugar</h3>
-      <button class="btn-ghost" id="closeHelp" style="border-radius:8px; padding:.4rem .7rem; height:auto; min-width:auto;">Cerrar</button>
-    </div>
-    <div style="line-height:1.55; color:#333;">
-      <p><strong style="color: #001A73; font-weight: bold;">Usa las flechas</strong> para ordenar las tarjetas en la secuencia correcta. Cuando estés listo, pulsa <strong style="color: #001A73; font-weight: bold;">Comprobar</strong> para verificar tus respuestas.</p>
+  <div class="loading-indicator" id="loadingIndicator">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Cargando imágenes...</div>
+  </div>
+
+  <div id="helpModal"
+    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:100; justify-content:center; align-items:center; padding:1rem;">
+    <div
+      style="background:#fff; border-radius:12px; max-width:680px; width:100%; padding:1.2rem 1.2rem; box-shadow:0 10px 24px rgba(0,0,0,.2);">
+      <div
+        style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:.5rem; margin-bottom:.8rem;">
+        <h3 style="color:var(--blue-700);">Cómo jugar</h3>
+        <button class="btn-ghost" id="closeHelp"
+          style="border-radius:8px; padding:.4rem .7rem; height:auto; min-width:auto;">Cerrar</button>
+      </div>
+      <div style="line-height:1.55; color:#333;">
+        <p><strong style="color: #001A73; font-weight: bold;">Usa las flechas</strong> para ordenar las tarjetas en la
+          secuencia correcta. Cuando estés listo, pulsa <strong
+            style="color: #001A73; font-weight: bold;">Comprobar</strong> para verificar tus respuestas.</p>
+      </div>
     </div>
   </div>
-</div>
+  <!-- Modal para enviar puntuación -->
+  <div id="submitModal" style="display: none;">
+    <div class="modal-overlay">
+      <div class="modal-content">
+        <h2 class="modal-title">¡Felicidades!</h2>
+        <div class="modal-info">
+          Tu puntuación: <span id="modalScore"></span><br>
+          Tiempo: <span id="modalTime"></span>
+        </div>
+        <div class="form-group">
+          <label for="playerName" class="form-label">Nombre:</label>
+          <input type="text" id="playerName" class="form-input" placeholder="Introduce tu nombre" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label for="playerSurname" class="form-label">Apellido:</label>
+          <input type="text" id="playerSurname" class="form-input" placeholder="Introduce tu apellido" maxlength="20">
+        </div>
+        <div class="modal-buttons">
+          <button id="submitScoreBtn" class="btn btn-primary">Guardar puntuación</button>
+          <button id="discardScoreBtn" class="btn btn-ghost">No guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<script>
-/************** Data **************/
-const DELAY_AFTER_ANSWER = 500; // 0.5 segundos
+  <script>
+    // --- CONFIGURACIÓN DEL HALL OF FAME ---
+    // Define el nombre de la pestaña en tu Google Sheets.
+    const SHEET_NAME = "Funcionamiento"; // <-- ¡CAMBIA ESTO! Ej: "Geografia", "Ciencias"
+    // Pega aquí la URL de tu Apps Script.
+    const APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwPDxbGmyC9WuNjaLuDgDSgrt74hMkyYTcAxyLoJ6qlI-TBmsV6W1ml5AXKC3TyMA8CQ/exec"; // <-- ¡CAMBIA ESTO!
 
-/* Datos de los sistemas */
-const SYSTEMS_DATA = [
-  {
-    id: 'digestivo',
-    title: 'Aparato digestivo',
-    subtitle: 'Ordena el proceso de digestión.',
-    type: 'order',
-    content: [
-      'El alimento entra en la boca , con los dientes y  la saliva, se forma el bolo alimenticio',
-      'El bolo alimenticio pasa por el esófago y llega al estómago',
-      'El bolo alimenticio se mezcla con los jugos del estómago y se convierte en una papilla.',
-      'La papilla pasa al intestino y se mezcla con los jugos del hígado y del páncreas y se separan los nutrientes',
-      'Los nutrientes pasan a la sangre y los desechos se convierten en heces',
-      'Las heces se expulsan por el ano'
-    ]
-  },
-  {
-    id: 'respiratorio',
-    title: 'Aparato respiratorio',
-    subtitle: 'Ordena el proceso de respiración.',
-    type: 'order',
-    content: [
-      'Inspiración: el aire entre por las fosas nasales',
-      'El aire pasa por la faringe, la traquea, los bronquios y llega a los pulmones',
-      'Intercambio de gases: el oxígeno pasa a la sangre y el dióxido de carbono (CO₂) pasa al aire',
-      'Espiración: el dióxido de carbono (CO₂) sale de los pulmones y se expulsa al exterior'
-    ]
-  },
-  {
-    id: 'circulatorio',
-    title: 'Aparato circulatorio',
-    subtitle: 'Define los elementos del aparato circulatorio.',
-    type: 'match',
-    content: [
-      { function: 'Está formado por el corazón, los vasos sanguíneos y la sangre', element: 'Aparato circulatorio' },
-      { function: 'Bombea la sangre a través de los vasos sanguíneos', element: 'Corazón' },
-      { function: 'Conductos por los que circula la sangre', element: 'Vasos sanguíneos' },
-      { function: 'Trasnporta nutrientes y recoge desechos', element: 'Sangre' }
-    ]
-  },
-  {
-    id: 'excretor',
-    title: 'Aparato excretor',
-    subtitle: 'Ordena el funcionamiento del proceso urinario.',
-    type: 'order',
-    content: [
-      'La sangre entra en los riñones',
-      'Los riñones limpian la sangre y con los desechos forma la orina',
-      'La orina baja por los uréteres y se almacena en la vejiga',
-      'La orina se expulsa mediante la uretra'
-    ]
-  }
-];
+    // --- FUNCIONES DE RED (Hall of Fame y Envío) ---
 
-// Mapeo de audios de efectos
-const soundFiles = {
-  completed: 'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Completado.mp3',
-  correct:   'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Correcto.mp3',
-  victory:   'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Termin%C3%A9.mp3',
-  error:     'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Error.mp3',
-  tap:       'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Tap.mp3'
-};
-let sounds = {}; // Inicializado en el evento click
-let isMuted = false;
-let audioUnlocked = false;
-let userInteracted = false;
-
-const el = (id)=>document.getElementById(id);
-const progressFill = el('progressFill');
-const timerEl = el('timer');
-const scoreEl = el('score');
-const loadingIndicator = el('loadingIndicator');
-const gameContent = el('gameContent');
-const gameTitle = el('gameTitle');
-const gameSubtitle = el('gameSubtitle');
-
-let systemsOrder = []; // Orden aleatorio de los sistemas
-let currentSystemIndex = 0; // Índice del sistema actual
-let answeredQuestions = 0; // Contador de preguntas respondidas correctamente
-let totalQuestions = 0; // Total de preguntas en todos los sistemas
-let timerInt = null; 
-let elapsed = 0;
-let mode = 'start'; // Estado inicial
-
-// Calcular el total de preguntas
-SYSTEMS_DATA.forEach(system => {
-  if (system.type === 'order') {
-    totalQuestions += system.content.length;
-  } else if (system.type === 'match') {
-    totalQuestions += system.content.length;
-  }
-});
-
-function fmtTime(s){ 
-  const m=Math.floor(s/60).toString().padStart(2,'0'); 
-  const ss=(s%60).toString().padStart(2,'0'); 
-  return `${m}:${ss}`; 
-}
-
-function startTimer(){ 
-  clearInterval(timerInt); 
-  timerInt = setInterval(()=>{ 
-    elapsed++; 
-    timerEl.textContent = fmtTime(elapsed); 
-  },1000); 
-}
-
-function stopTimer(){ 
-  clearInterval(timerInt); 
-}
-
-function updateProgress(){ 
-  const pct = (currentSystemIndex / SYSTEMS_DATA.length)*100; 
-  const score = Math.round((answeredQuestions/totalQuestions)*100);
-  progressFill.style.width = pct + '%'; 
-  scoreEl.textContent = score;
-}
-
-function beginPlay(){
-  mode='play';
-  
-  // Generar orden aleatorio para los sistemas
-  systemsOrder = shuffle([...Array(SYSTEMS_DATA.length).keys()]);
-  currentSystemIndex = 0;
-  answeredQuestions = 0;
-  updateProgress();
-  
-  elapsed = 0;
-  timerEl.textContent = '00:00';
-  startTimer();
-  
-  // Cargar el primer sistema
-  loadSystem(systemsOrder[currentSystemIndex]);
-}
-
-function loadSystem(systemIndex) {
-  const system = SYSTEMS_DATA[systemIndex];
-  
-  // Actualizar título y subtítulo
-  gameTitle.textContent = system.title;
-  gameSubtitle.textContent = system.subtitle;
-  
-  // Limpiar contenido anterior
-  gameContent.innerHTML = '';
-  
-  // Cargar contenido según el tipo
-  if (system.type === 'order') {
-    loadOrderSystem(system);
-  } else if (system.type === 'match') {
-    loadMatchSystem(system);
-  }
-}
-
-function loadOrderSystem(system) {
-  // Crear contenedor de tarjetas
-  const cardsContainer = document.createElement('div');
-  cardsContainer.className = 'cards-container';
-  
-  // Crear un array con índices y desordenarlo
-  const indices = [...Array(system.content.length).keys()];
-  let shuffledIndices = shuffle(indices);
-  
-  // Asegurar que ninguna tarjeta esté en su lugar correcto inicialmente
-  while (shuffledIndices.every((val, idx) => val === idx)) {
-    shuffledIndices = shuffle(indices);
-  }
-  
-  // Crear tarjetas desordenadas
-  shuffledIndices.forEach((originalIndex, currentIndex) => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.dataset.originalIndex = originalIndex;
-    card.dataset.currentIndex = currentIndex;
-    
-    const cardContent = document.createElement('div');
-    cardContent.className = 'card-content';
-    cardContent.textContent = system.content[originalIndex];
-    
-    const cardControls = document.createElement('div');
-    cardControls.className = 'card-controls';
-    
-    // Flecha arriba
-    const upBtn = document.createElement('button');
-    upBtn.className = 'arrow-btn';
-    upBtn.innerHTML = '▲'; // Triángulo blanco hacia arriba
-    upBtn.disabled = currentIndex === 0;
-    upBtn.addEventListener('click', () => moveCardUp(card));
-    
-    // Flecha abajo
-    const downBtn = document.createElement('button');
-    downBtn.className = 'arrow-btn';
-    downBtn.innerHTML = '▼'; // Triángulo blanco hacia abajo
-    downBtn.disabled = currentIndex === shuffledIndices.length - 1;
-    downBtn.addEventListener('click', () => moveCardDown(card));
-    
-    cardControls.appendChild(upBtn);
-    cardControls.appendChild(downBtn);
-    
-    card.appendChild(cardContent);
-    card.appendChild(cardControls);
-    
-    cardsContainer.appendChild(card);
-  });
-  
-  gameContent.appendChild(cardsContainer);
-  
-  // Crear botón de comprobación
-  const actionButtons = document.createElement('div');
-  actionButtons.className = 'action-buttons';
-  
-  const checkBtn = document.createElement('button');
-  checkBtn.className = 'btn btn-primary';
-  checkBtn.textContent = 'Comprobar';
-  checkBtn.addEventListener('click', checkOrder);
-  
-  actionButtons.appendChild(checkBtn);
-  gameContent.appendChild(actionButtons);
-}
-
-function loadMatchSystem(system) {
-  // Crear un array con índices y desordenarlo
-  const indices = [...Array(system.content.length).keys()];
-  const shuffledIndices = shuffle(indices);
-  
-  // Guardar el orden y el índice actual en el contexto del sistema
-  system.currentMatchIndex = 0;
-  system.shuffledIndices = shuffledIndices;
-  
-  // Crear tarjeta de función
-  const functionCard = document.createElement('div');
-  functionCard.className = 'function-card';
-  // Usar innerHTML para interpretar la etiqueta <sub>
-  functionCard.innerHTML = system.content[shuffledIndices[system.currentMatchIndex]].function;
-  
-  // Crear contenedor de opciones
-  const optionsContainer = document.createElement('div');
-  optionsContainer.className = 'options-container';
-  
-  // Crear botones de opción
-  const options = ['Aparato circulatorio', 'Corazón', 'Vasos sanguíneos', 'Sangre'];
-  options.forEach(option => {
-    const optionBtn = document.createElement('button');
-    optionBtn.className = 'option-btn';
-    optionBtn.textContent = option;
-    optionBtn.addEventListener('click', () => checkMatch(option, system.content[shuffledIndices[system.currentMatchIndex]].element, optionBtn, system));
-    optionsContainer.appendChild(optionBtn);
-  });
-  
-  gameContent.appendChild(functionCard);
-  gameContent.appendChild(optionsContainer);
-}
-
-function moveCardUp(card) {
-  reproducirSonidoTap();
-  
-  const currentIndex = parseInt(card.dataset.currentIndex);
-  if (currentIndex === 0) return;
-  
-  const cards = Array.from(document.querySelectorAll('.card'));
-  const prevCard = cards.find(c => parseInt(c.dataset.currentIndex) === currentIndex - 1);
-  
-  // Intercambiar posiciones
-  card.dataset.currentIndex = currentIndex - 1;
-  prevCard.dataset.currentIndex = currentIndex;
-  
-  // Reordenar en el DOM
-  const parent = card.parentNode;
-  const cardPrev = card.previousElementSibling;
-  parent.insertBefore(card, cardPrev);
-  
-  // Actualizar estado de los botones
-  updateArrowButtons();
-  
-  // Resaltar la tarjeta movida
-  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-  card.classList.add('selected');
-}
-
-function moveCardDown(card) {
-  reproducirSonidoTap();
-  
-  const currentIndex = parseInt(card.dataset.currentIndex);
-  const cards = Array.from(document.querySelectorAll('.card'));
-  if (currentIndex === cards.length - 1) return;
-  
-  const nextCard = cards.find(c => parseInt(c.dataset.currentIndex) === currentIndex + 1);
-  
-  // Intercambiar posiciones
-  card.dataset.currentIndex = currentIndex + 1;
-  nextCard.dataset.currentIndex = currentIndex;
-  
-  // Reordenar en el DOM
-  const parent = card.parentNode;
-  const cardNext = card.nextElementSibling;
-  parent.insertBefore(nextCard, card);
-  
-  // Actualizar estado de los botones
-  updateArrowButtons();
-  
-  // Resaltar la tarjeta movida
-  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-  card.classList.add('selected');
-}
-
-function updateArrowButtons() {
-  const cards = Array.from(document.querySelectorAll('.card'));
-  
-  cards.forEach((card, index) => {
-    const upBtn = card.querySelector('.arrow-btn:first-child');
-    const downBtn = card.querySelector('.arrow-btn:last-child');
-    
-    upBtn.disabled = index === 0;
-    downBtn.disabled = index === cards.length - 1;
-  });
-}
-
-function checkOrder() {
-  reproducirSonidoTap();
-  
-  const cards = Array.from(document.querySelectorAll('.card'));
-  let allCorrect = true;
-  
-  // Verificar si todas las tarjetas están en su lugar correcto
-  cards.forEach(card => {
-    const originalIndex = parseInt(card.dataset.originalIndex);
-    const currentIndex = parseInt(card.dataset.currentIndex);
-    
-    if (originalIndex === currentIndex) {
-      card.classList.add('correct');
-      card.classList.remove('incorrect');
-    } else {
-      card.classList.add('incorrect');
-      card.classList.remove('correct');
-      allCorrect = false;
+    function formatMixedTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = (s % 60).toFixed(1).padStart(4, '0');
+      return `${m}m:${sec}s`;
     }
-  });
-  
-  if (allCorrect) {
-    reproducirSonidoCorrecto();
-    answeredQuestions += cards.length;
-    updateProgress();
-    
-    // Deshabilitar botones
-    document.querySelectorAll('.arrow-btn').forEach(btn => btn.disabled = true);
-    
-    // Pasar a la siguiente pantalla después de 1 segundo
-    setTimeout(() => {
-      nextSystem();
-    }, 1000);
-  } else {
-    reproducirSonidoError();
-    
-    // Mostrar botón continuar
-    const actionButtons = document.querySelector('.action-buttons');
-    
-    // Verificar si ya existe el botón continuar
-    if (!document.getElementById('continueBtn')) {
-      const continueBtn = document.createElement('button');
-      continueBtn.id = 'continueBtn';
-      continueBtn.className = 'btn btn-blue';
-      continueBtn.textContent = 'Continuar';
-      continueBtn.addEventListener('click', () => {
-        reproducirSonidoTap();
-        nextSystem();
+
+    /**
+     * Carga y muestra el Hall of Fame desde Google Sheets
+     */
+    async function loadHallOfFame() {
+      const container = el('hofTableBody'); // Asegúrate que este ID coincida con tu HTML
+
+      if (!APP_SCRIPT_URL || APP_SCRIPT_URL.includes("URL_DE_TU_SCRIPT")) {
+        container.innerHTML = '<tr><td colspan="4" class="hall-of-fame-error">URL de script no configurada.</td></tr>';
+        return;
+      }
+
+      try {
+        const uniqueUrl = APP_SCRIPT_URL + `?sheetName=${SHEET_NAME}&v=` + Date.now();
+
+        container.innerHTML = '<tr><td colspan="4" class="hall-of-fame-loading">Cargando...</td></tr>';
+
+        const res = await fetch(uniqueUrl);
+        const json = await res.json();
+
+        if (json.success && json.data && json.data.length > 0) {
+          let html = ``;
+
+          json.data.forEach((row, i) => {
+            const nombre = row.name || "Anónimo";
+            const apellidoInicial = row.surname ? row.surname.charAt(0) + '.' : "";
+            const tiempo = row.time ? formatMixedTime(row.time) : "--";
+            const puntuacion = row.score || 0;
+
+            html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${nombre} ${apellidoInicial}</td>
+            <td>${puntuacion}</td>
+            <td>${tiempo}</td>
+          </tr>`;
+          });
+
+          container.innerHTML = html;
+        } else if (json.success) {
+          container.innerHTML = '<tr><td colspan="4" class="hall-of-fame-loading">Sé el primero en aparecer aquí.</td></tr>';
+        } else {
+          throw new Error(json.error || "Error en datos");
+        }
+      } catch (e) {
+        console.error("Error cargando ranking:", e);
+        container.innerHTML = '<tr><td colspan="4" class="hall-of-fame-error">No se pudo cargar.</td></tr>';
+      }
+    }
+
+    /**
+     * Envía la puntuación al Script de Google
+     */
+    async function submitScore(name, surname, time, score, buttonElement) {
+      const originalText = buttonElement.textContent;
+      buttonElement.disabled = true;
+      buttonElement.innerHTML = `<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Guardando...`;
+
+      try {
+        const payload = { name, surname, time, score, sheetName: SHEET_NAME };
+
+        const res = await fetch(APP_SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+
+        if (json.result === 'success' || json.success) {
+          // Cierre inmediato y recarga en segundo plano
+          el('submitModal').style.display = 'none';
+          loadHallOfFame();
+        } else {
+          throw new Error(json.error || "Error desconocido del servidor");
+        }
+      } catch (e) {
+        console.error("Error detallado al guardar:", e);
+        // Mensaje de error en el modal
+        const modalInfo = el('modal-info');
+        modalInfo.innerHTML = `<p style="color: var(--red); font-weight: 700;">Hubo un error al guardar.</p>`;
+      } finally {
+        // Restaurar el botón para que pueda intentarlo de nuevo si falla
+        buttonElement.disabled = false;
+        buttonElement.textContent = originalText;
+      }
+    }
+
+    /**
+     * Muestra el modal para guardar la puntuación y maneja los clics.
+     */
+    function showSubmitModal(time, score) {
+      el('submitModal').style.display = 'block';
+      el('modalTime').textContent = formatMixedTime(time);
+      el('modalScore').textContent = score;
+
+      // Clonar y reemplazar para evitar múltiples listeners
+      const subBtn = el('submitScoreBtn'), discBtn = el('discardScoreBtn');
+      const newSub = subBtn.cloneNode(true), newDisc = discBtn.cloneNode(true);
+      subBtn.replaceWith(newSub); discBtn.replaceWith(newDisc);
+
+      newSub.addEventListener('click', () => {
+        reproducirSonidoTap(); // Asegúrate de tener esta función de sonido
+        const name = el('playerName').value.trim();
+        const surname = el('playerSurname').value.trim();
+        if (name && surname) {
+          submitScore(name, surname, time, score, newSub);
+        } else {
+          alert('Introduce nombre y apellidos');
+        }
       });
-      
-      actionButtons.appendChild(continueBtn);
+
+      newDisc.textContent = 'No guardar';
+      newDisc.addEventListener('click', () => {
+        reproducirSonidoTap(); // Asegúrate de tener esta función de sonido
+        el('submitModal').style.display = 'none';
+        el('playerName').value = '';
+        el('playerSurname').value = '';
+      });
     }
-  }
-}
 
-function checkMatch(selectedOption, correctOption, buttonElement, system) {
-  // Deshabilitar todos los botones temporalmente
-  document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
-  
-  if (selectedOption === correctOption) {
-    reproducirSonidoCorrecto();
-    buttonElement.classList.add('correct');
-    answeredQuestions++;
-    updateProgress();
-  } else {
-    reproducirSonidoError();
-    buttonElement.classList.add('incorrect');
-  }
-  
-  // Pasar a la siguiente tarjeta después de 0.5 segundos
-  setTimeout(() => {
-    nextMatch(system);
-  }, 500);
-}
 
-function nextMatch(system) {
-  system.currentMatchIndex++;
-  
-  if (system.currentMatchIndex < system.content.length) {
-    // Actualizar tarjeta de función
-    const functionCard = document.querySelector('.function-card');
-    // Usar innerHTML para interpretar la etiqueta <sub>
-    functionCard.innerHTML = system.content[system.shuffledIndices[system.currentMatchIndex]].function;
-    
-    // Restablecer botones de opción
-    const optionsContainer = document.querySelector('.options-container');
-    optionsContainer.innerHTML = '';
-    
-    // Crear botones de opción
-    const options = ['Aparato circulatorio', 'Corazón', 'Vasos sanguíneos', 'Sangre'];
-    options.forEach(option => {
-      const optionBtn = document.createElement('button');
-      optionBtn.className = 'option-btn';
-      optionBtn.textContent = option;
-      optionBtn.addEventListener('click', () => checkMatch(option, system.content[system.shuffledIndices[system.currentMatchIndex]].element, optionBtn, system));
-      optionsContainer.appendChild(optionBtn);
+    /************** Data **************/
+    const DELAY_AFTER_ANSWER = 500; // 0.5 segundos
+
+    /* Datos de los sistemas */
+    const SYSTEMS_DATA = [
+      {
+        id: 'digestivo',
+        title: 'Aparato digestivo',
+        subtitle: 'Ordena el proceso de digestión.',
+        type: 'order',
+        content: [
+          'El alimento entra en la boca , con los dientes y  la saliva, se forma el bolo alimenticio',
+          'El bolo alimenticio pasa por el esófago y llega al estómago',
+          'El bolo alimenticio se mezcla con los jugos del estómago y se convierte en una papilla.',
+          'La papilla pasa al intestino y se mezcla con los jugos del hígado y del páncreas y se separan los nutrientes',
+          'Los nutrientes pasan a la sangre y los desechos se convierten en heces',
+          'Las heces se expulsan por el ano'
+        ]
+      },
+      {
+        id: 'respiratorio',
+        title: 'Aparato respiratorio',
+        subtitle: 'Ordena el proceso de respiración.',
+        type: 'order',
+        content: [
+          'Inspiración: el aire entre por las fosas nasales',
+          'El aire pasa por la faringe, la traquea, los bronquios y llega a los pulmones',
+          'Intercambio de gases: el oxígeno pasa a la sangre y el dióxido de carbono (CO₂) pasa al aire',
+          'Expiración: el dióxido de carbono (CO₂) sale de los pulmones y se expulsa al exterior'
+        ]
+      },
+      {
+        id: 'circulatorio',
+        title: 'Aparato circulatorio',
+        subtitle: 'Define los elementos del aparato circulatorio.',
+        type: 'match',
+        content: [
+          { function: 'Está formado por el corazón, los vasos sanguíneos y la sangre', element: 'Aparato circulatorio' },
+          { function: 'Bombea la sangre a través de los vasos sanguíneos', element: 'Corazón' },
+          { function: 'Conductos por los que circula la sangre', element: 'Vasos sanguíneos' },
+          { function: 'Trasnporta nutrientes y recoge desechos', element: 'Sangre' }
+        ]
+      },
+      {
+        id: 'excretor',
+        title: 'Aparato excretor',
+        subtitle: 'Ordena el funcionamiento del proceso urinario.',
+        type: 'order',
+        content: [
+          'La sangre entra en los riñones',
+          'Los riñones limpian la sangre y con los desechos forma la orina',
+          'La orina baja por los uréteres y se almacena en la vejiga',
+          'La orina se expulsa mediante la uretra'
+        ]
+      }
+    ];
+
+    // Mapeo de audios de efectos
+    const soundFiles = {
+      completed: 'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Completado.mp3',
+      correct: 'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Correcto.mp3',
+      victory: 'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Termin%C3%A9.mp3',
+      error: 'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Error.mp3',
+      tap: 'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/main/Tap.mp3'
+    };
+    let sounds = {}; // Inicializado en el evento click
+    let isMuted = false;
+    let audioUnlocked = false;
+    let userInteracted = false;
+
+    const el = (id) => document.getElementById(id);
+    const progressFill = el('progressFill');
+    const timerEl = el('timer');
+    const scoreEl = el('score');
+    const loadingIndicator = el('loadingIndicator');
+    const gameContent = el('gameContent');
+    const gameTitle = el('gameTitle');
+    const gameSubtitle = el('gameSubtitle');
+
+    let systemsOrder = []; // Orden aleatorio de los sistemas
+    let currentSystemIndex = 0; // Índice del sistema actual
+    let answeredQuestions = 0; // Contador de preguntas respondidas correctamente
+    let totalQuestions = 0; // Total de preguntas en todos los sistemas
+    let timerInt = null;
+    let elapsed = 0;
+    let mode = 'start'; // Estado inicial
+
+    // Calcular el total de preguntas
+    SYSTEMS_DATA.forEach(system => {
+      if (system.type === 'order') {
+        totalQuestions += system.content.length;
+      } else if (system.type === 'match') {
+        totalQuestions += system.content.length;
+      }
     });
-  } else {
-    // Se han completado todas las coincidencias, pasar al siguiente sistema
-    nextSystem();
-  }
-}
 
-function nextSystem() {
-  currentSystemIndex++;
-  if (currentSystemIndex >= systemsOrder.length) {
-    // Fin del juego
-    finishGame(); 
-  } else {
-    // Cargar siguiente sistema
-    loadSystem(systemsOrder[currentSystemIndex]);
-  }
-}
+    function fmtTime(s) {
+      const m = Math.floor(s / 60).toString().padStart(2, '0');
+      const ss = (s % 60).toString().padStart(2, '0');
+      return `${m}:${ss}`;
+    }
 
-function finishGame(){ 
-  stopTimer(); 
-  const score = Math.round((answeredQuestions/totalQuestions)*100);
-  el('gameScreen').classList.remove('active'); 
+    function startTimer() {
+      clearInterval(timerInt);
+      timerInt = setInterval(() => {
+        elapsed++;
+        timerEl.textContent = fmtTime(elapsed);
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInt);
+    }
+
+    function updateProgress() {
+      const pct = (currentSystemIndex / SYSTEMS_DATA.length) * 100;
+      const score = Math.round((answeredQuestions / totalQuestions) * 100);
+      progressFill.style.width = pct + '%';
+      scoreEl.textContent = score;
+    }
+
+    function beginPlay() {
+      mode = 'play';
+
+      // Generar orden aleatorio para los sistemas
+      systemsOrder = shuffle([...Array(SYSTEMS_DATA.length).keys()]);
+      currentSystemIndex = 0;
+      answeredQuestions = 0;
+      updateProgress();
+
+      elapsed = 0;
+      timerEl.textContent = '00:00';
+      startTimer();
+
+      // Cargar el primer sistema
+      loadSystem(systemsOrder[currentSystemIndex]);
+    }
+
+    function loadSystem(systemIndex) {
+      const system = SYSTEMS_DATA[systemIndex];
+
+      // Actualizar título y subtítulo
+      gameTitle.textContent = system.title;
+      gameSubtitle.textContent = system.subtitle;
+
+      // Limpiar contenido anterior
+      gameContent.innerHTML = '';
+
+      // Cargar contenido según el tipo
+      if (system.type === 'order') {
+        loadOrderSystem(system);
+      } else if (system.type === 'match') {
+        loadMatchSystem(system);
+      }
+    }
+
+    function loadOrderSystem(system) {
+      // Crear contenedor de tarjetas
+      const cardsContainer = document.createElement('div');
+      cardsContainer.className = 'cards-container';
+
+      // Crear un array con índices y desordenarlo
+      const indices = [...Array(system.content.length).keys()];
+      let shuffledIndices = shuffle(indices);
+
+      // Asegurar que ninguna tarjeta esté en su lugar correcto inicialmente
+      while (shuffledIndices.every((val, idx) => val === idx)) {
+        shuffledIndices = shuffle(indices);
+      }
+
+      // Crear tarjetas desordenadas
+      shuffledIndices.forEach((originalIndex, currentIndex) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.originalIndex = originalIndex;
+        card.dataset.currentIndex = currentIndex;
+
+        const cardContent = document.createElement('div');
+        cardContent.className = 'card-content';
+        cardContent.textContent = system.content[originalIndex];
+
+        const cardControls = document.createElement('div');
+        cardControls.className = 'card-controls';
+
+        // Flecha arriba
+        const upBtn = document.createElement('button');
+        upBtn.className = 'arrow-btn';
+        upBtn.innerHTML = '▲'; // Triángulo blanco hacia arriba
+        upBtn.disabled = currentIndex === 0;
+        upBtn.addEventListener('click', () => moveCardUp(card));
+
+        // Flecha abajo
+        const downBtn = document.createElement('button');
+        downBtn.className = 'arrow-btn';
+        downBtn.innerHTML = '▼'; // Triángulo blanco hacia abajo
+        downBtn.disabled = currentIndex === shuffledIndices.length - 1;
+        downBtn.addEventListener('click', () => moveCardDown(card));
+
+        cardControls.appendChild(upBtn);
+        cardControls.appendChild(downBtn);
+
+        card.appendChild(cardContent);
+        card.appendChild(cardControls);
+
+        cardsContainer.appendChild(card);
+      });
+
+      gameContent.appendChild(cardsContainer);
+
+      // Crear botón de comprobación
+      const actionButtons = document.createElement('div');
+      actionButtons.className = 'action-buttons';
+
+      const checkBtn = document.createElement('button');
+      checkBtn.className = 'btn btn-primary';
+      checkBtn.textContent = 'Comprobar';
+      checkBtn.addEventListener('click', checkOrder);
+
+      actionButtons.appendChild(checkBtn);
+      gameContent.appendChild(actionButtons);
+    }
+
+    function loadMatchSystem(system) {
+      // Crear un array con índices y desordenarlo
+      const indices = [...Array(system.content.length).keys()];
+      const shuffledIndices = shuffle(indices);
+
+      // Guardar el orden y el índice actual en el contexto del sistema
+      system.currentMatchIndex = 0;
+      system.shuffledIndices = shuffledIndices;
+
+      // Crear tarjeta de función
+      const functionCard = document.createElement('div');
+      functionCard.className = 'function-card';
+      // Usar innerHTML para interpretar la etiqueta <sub>
+      functionCard.innerHTML = system.content[shuffledIndices[system.currentMatchIndex]].function;
+
+      // Crear contenedor de opciones
+      const optionsContainer = document.createElement('div');
+      optionsContainer.className = 'options-container';
+
+      // Crear botones de opción
+      const options = ['Aparato circulatorio', 'Corazón', 'Vasos sanguíneos', 'Sangre'];
+      options.forEach(option => {
+        const optionBtn = document.createElement('button');
+        optionBtn.className = 'option-btn';
+        optionBtn.textContent = option;
+        optionBtn.addEventListener('click', () => checkMatch(option, system.content[shuffledIndices[system.currentMatchIndex]].element, optionBtn, system));
+        optionsContainer.appendChild(optionBtn);
+      });
+
+      gameContent.appendChild(functionCard);
+      gameContent.appendChild(optionsContainer);
+    }
+
+    function moveCardUp(card) {
+      reproducirSonidoTap();
+
+      const currentIndex = parseInt(card.dataset.currentIndex);
+      if (currentIndex === 0) return;
+
+      const cards = Array.from(document.querySelectorAll('.card'));
+      const prevCard = cards.find(c => parseInt(c.dataset.currentIndex) === currentIndex - 1);
+
+      // Intercambiar posiciones
+      card.dataset.currentIndex = currentIndex - 1;
+      prevCard.dataset.currentIndex = currentIndex;
+
+      // Reordenar en el DOM
+      const parent = card.parentNode;
+      const cardPrev = card.previousElementSibling;
+      parent.insertBefore(card, cardPrev);
+
+      // Actualizar estado de los botones
+      updateArrowButtons();
+
+      // Resaltar la tarjeta movida
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    }
+
+    function moveCardDown(card) {
+      reproducirSonidoTap();
+
+      const currentIndex = parseInt(card.dataset.currentIndex);
+      const cards = Array.from(document.querySelectorAll('.card'));
+      if (currentIndex === cards.length - 1) return;
+
+      const nextCard = cards.find(c => parseInt(c.dataset.currentIndex) === currentIndex + 1);
+
+      // Intercambiar posiciones
+      card.dataset.currentIndex = currentIndex + 1;
+      nextCard.dataset.currentIndex = currentIndex;
+
+      // Reordenar en el DOM
+      const parent = card.parentNode;
+      const cardNext = card.nextElementSibling;
+      parent.insertBefore(nextCard, card);
+
+      // Actualizar estado de los botones
+      updateArrowButtons();
+
+      // Resaltar la tarjeta movida
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    }
+
+    function updateArrowButtons() {
+      const cards = Array.from(document.querySelectorAll('.card'));
+
+      cards.forEach((card, index) => {
+        const upBtn = card.querySelector('.arrow-btn:first-child');
+        const downBtn = card.querySelector('.arrow-btn:last-child');
+
+        upBtn.disabled = index === 0;
+        downBtn.disabled = index === cards.length - 1;
+      });
+    }
+
+    function checkOrder() {
+      reproducirSonidoTap();
+
+      const cards = Array.from(document.querySelectorAll('.card'));
+      let allCorrect = true;
+
+      // Verificar si todas las tarjetas están en su lugar correcto
+      cards.forEach(card => {
+        const originalIndex = parseInt(card.dataset.originalIndex);
+        const currentIndex = parseInt(card.dataset.currentIndex);
+
+        if (originalIndex === currentIndex) {
+          card.classList.add('correct');
+          card.classList.remove('incorrect');
+        } else {
+          card.classList.add('incorrect');
+          card.classList.remove('correct');
+          allCorrect = false;
+        }
+      });
+
+      if (allCorrect) {
+        reproducirSonidoCorrecto();
+        answeredQuestions += cards.length;
+        updateProgress();
+
+        // Deshabilitar botones
+        document.querySelectorAll('.arrow-btn').forEach(btn => btn.disabled = true);
+
+        // Pasar a la siguiente pantalla después de 1 segundo
+        setTimeout(() => {
+          nextSystem();
+        }, 1000);
+      } else {
+        reproducirSonidoError();
+
+        // Mostrar botón continuar
+        const actionButtons = document.querySelector('.action-buttons');
+
+        // Verificar si ya existe el botón continuar
+        if (!document.getElementById('continueBtn')) {
+          const continueBtn = document.createElement('button');
+          continueBtn.id = 'continueBtn';
+          continueBtn.className = 'btn btn-blue';
+          continueBtn.textContent = 'Continuar';
+          continueBtn.addEventListener('click', () => {
+            reproducirSonidoTap();
+            nextSystem();
+          });
+
+          actionButtons.appendChild(continueBtn);
+        }
+      }
+    }
+
+    function checkMatch(selectedOption, correctOption, buttonElement, system) {
+      // Deshabilitar todos los botones temporalmente
+      document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+
+      if (selectedOption === correctOption) {
+        reproducirSonidoCorrecto();
+        buttonElement.classList.add('correct');
+        answeredQuestions++;
+        updateProgress();
+      } else {
+        reproducirSonidoError();
+        buttonElement.classList.add('incorrect');
+      }
+
+      // Pasar a la siguiente tarjeta después de 0.5 segundos
+      setTimeout(() => {
+        nextMatch(system);
+      }, 500);
+    }
+
+    function nextMatch(system) {
+      system.currentMatchIndex++;
+
+      if (system.currentMatchIndex < system.content.length) {
+        // Actualizar tarjeta de función
+        const functionCard = document.querySelector('.function-card');
+        // Usar innerHTML para interpretar la etiqueta <sub>
+        functionCard.innerHTML = system.content[system.shuffledIndices[system.currentMatchIndex]].function;
+
+        // Restablecer botones de opción
+        const optionsContainer = document.querySelector('.options-container');
+        optionsContainer.innerHTML = '';
+
+        // Crear botones de opción
+        const options = ['Aparato circulatorio', 'Corazón', 'Vasos sanguíneos', 'Sangre'];
+        options.forEach(option => {
+          const optionBtn = document.createElement('button');
+          optionBtn.className = 'option-btn';
+          optionBtn.textContent = option;
+          optionBtn.addEventListener('click', () => checkMatch(option, system.content[system.shuffledIndices[system.currentMatchIndex]].element, optionBtn, system));
+          optionsContainer.appendChild(optionBtn);
+        });
+      } else {
+        // Se han completado todas las coincidencias, pasar al siguiente sistema
+        nextSystem();
+      }
+    }
+
+    function nextSystem() {
+      currentSystemIndex++;
+      if (currentSystemIndex >= systemsOrder.length) {
+        // Fin del juego
+        finishGame();
+      } else {
+        // Cargar siguiente sistema
+        loadSystem(systemsOrder[currentSystemIndex]);
+      }
+    }
+
+    function finishGame(){
+  stopTimer();
+  
+  // Usamos las variables que sí existen en el código
+  const score = Math.round((answeredQuestions / totalQuestions) * 100);
+
+  // Cambiamos showScreen por el método directo de mostrar la pantalla
   el('resultsScreen').classList.add('active');
-  
-  el('finalScore').textContent = score; 
+  el('gameScreen').classList.remove('active');
+
+  el('finalScore').textContent = score;
   el('finalTime').textContent = fmtTime(elapsed);
-  el('trophyBox').style.display = (score===100) ? 'block' : 'none';
+
+  let msg;
+  if (score === 100) {
+    msg = '¡Enhorabuena, puntuación máxima!';
+    el('trophyBox').style.display = 'block';
+    reproducirSonidoVictoria();
+    spawnConfetti();
+  } else {
+    el('trophyBox').style.display = 'none';
+    reproducirSonidoCompletado();
+    msg = '¡Buen trabajo! Sigue practicando';
+  }
+  el('finalMsg').textContent = msg;  // Usamos el selector correcto
   
-  if(score===100){ 
-    el('finalMsg').textContent = '¡Enhorabuena, puntuación máxima!';
-    reproducirSonidoVictoria(); 
-    spawnConfetti(); 
-  } else { 
-    el('finalMsg').textContent = '¡Buen trabajo! Sigue practicando';
-    reproducirSonidoCompletado(); 
-  }
-  mode = 'finished';
+  showSubmitModal(elapsed, score);
 }
 
-function shuffle(a){ 
-  const arr=[...a]; 
-  for(let i=arr.length-1;i>0;i--){ 
-    const j=Math.floor(Math.random()*(i+1)); 
-    [arr[i],arr[j]]=[arr[j],arr[i]]; 
-  } 
-  return arr; 
-}
+    function shuffle(a) {
+      const arr = [...a];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
 
-/**
- * Función de Confeti
- */
-function spawnConfetti(){
-  for(let i=0;i<120;i++){
-    setTimeout(()=>{
-      const c=document.createElement('div');
-      c.className='confetti';
-      const x=Math.random()*window.innerWidth;
-      const ty=window.innerHeight+20;
-      const tx=(Math.random()-.5)*160;
-      const colors=['#ff595e','#1982c4','#6a4c93','#ffca3a','#8ac926','#ff924c','#00c2ff'];
-      c.style.left=x+'px';
-      c.style.top='-10px';
-      c.style.backgroundColor=colors[Math.floor(Math.random()*colors.length)];
-      const size=6+Math.random()*8;
-      c.style.width=size+'px';
-      c.style.height=size+'px';
-      c.style.setProperty('--tx', tx+'px');
-      c.style.setProperty('--ty', ty+'px');
-      document.body.appendChild(c);
-      setTimeout(()=>c.remove(), 3200);
-    }, i*18);
-  }
-}
+    /**
+     * Función de Confeti
+     */
+    function spawnConfetti() {
+      for (let i = 0; i < 120; i++) {
+        setTimeout(() => {
+          const c = document.createElement('div');
+          c.className = 'confetti';
+          const x = Math.random() * window.innerWidth;
+          const ty = window.innerHeight + 20;
+          const tx = (Math.random() - .5) * 160;
+          const colors = ['#ff595e', '#1982c4', '#6a4c93', '#ffca3a', '#8ac926', '#ff924c', '#00c2ff'];
+          c.style.left = x + 'px';
+          c.style.top = '-10px';
+          c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          const size = 6 + Math.random() * 8;
+          c.style.width = size + 'px';
+          c.style.height = size + 'px';
+          c.style.setProperty('--tx', tx + 'px');
+          c.style.setProperty('--ty', ty + 'px');
+          document.body.appendChild(c);
+          setTimeout(() => c.remove(), 3200);
+        }, i * 18);
+      }
+    }
 
-function gotoStart(){
-  el('resultsScreen').classList.remove('active'); 
-  el('gameScreen').classList.remove('active'); 
-  el('startScreen').classList.add('active');
-  systemsOrder=[]; 
-  currentSystemIndex=0;
-  answeredQuestions=0; 
-  elapsed=0; 
-  timerEl.textContent='00:00'; 
-  progressFill.style.width='0%'; 
-  scoreEl.textContent='0'; 
-  mode='start';
-}
+    function gotoStart() {
+      el('resultsScreen').classList.remove('active');
+      el('gameScreen').classList.remove('active');
+      el('startScreen').classList.add('active');
+      systemsOrder = [];
+      currentSystemIndex = 0;
+      organsOrder = [];
+      currentOrganIndex = 0;
+      answeredOrgans = 0;
+      elapsed = 0;
+      timerEl.textContent = '00:00';
+      progressFill.style.width = '0%';
+      scoreEl.textContent = '0';
+      mode = 'start';
+      markers.forEach(m => m.classList.remove('correct-highlight', 'incorrect-highlight'));
 
-/**
- * Inicializa los audios de efectos. Se llama al pulsar Comenzar.
- */
-function initializeEffectAudios() {
-  if(Object.keys(sounds).length > 0) return; // Ya inicializado
-  Object.entries(soundFiles).forEach(([k, url])=>{
-    const a = new Audio();
-    a.src = url;
-    a.preload = 'auto';
-    a.crossOrigin = 'anonymous';
-    sounds[k] = a;
-  });
-}
+      loadHallOfFame(); // <-- ¡AÑADE ESTA LÍNEA SI NO ESTÁ!
+    }
 
-/**
- * Intenta desbloquear el Web Audio API. Se llama al pulsar Comenzar.
- */
-function unlockAudio(){
-  if (audioUnlocked) return;
-  try{
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g);
-    g.connect(ctx.destination);
-    g.gain.value = 0.0001; // Volumen casi cero
-    o.start();
-    o.stop(ctx.currentTime + 0.02);
-    audioUnlocked = true;
-  } catch(e){
-    console.warn("Web Audio API no disponible o error al desbloquear:", e);
-    audioUnlocked = true;
-  }
-}
+    /**
+     * Inicializa los audios de efectos. Se llama al pulsar Comenzar.
+     */
+    function initializeEffectAudios() {
+      if (Object.keys(sounds).length > 0) return; // Ya inicializado
+      Object.entries(soundFiles).forEach(([k, url]) => {
+        const a = new Audio();
+        a.src = url;
+        a.preload = 'auto';
+        a.crossOrigin = 'anonymous';
+        sounds[k] = a;
+      });
+    }
 
-/**
- * Reproduce un sonido de efecto.
- */
-function play(name){
-  if(isMuted) return;
-  const a = sounds[name];
-  if(!a) return;
-  try{
-    a.currentTime = 0;
-    const p = a.play();
-    if (p && p.catch) p.catch(err => console.warn('Reproducción de efecto fallida (no-fatal):', err));
-  } catch(e){
-    console.warn('Audio play error:', e);
-  }
-}
+    /**
+     * Intenta desbloquear el Web Audio API. Se llama al pulsar Comenzar.
+     */
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g);
+        g.connect(ctx.destination);
+        g.gain.value = 0.0001; // Volumen casi cero
+        o.start();
+        o.stop(ctx.currentTime + 0.02);
+        audioUnlocked = true;
+      } catch (e) {
+        console.warn("Web Audio API no disponible o error al desbloquear:", e);
+        audioUnlocked = true;
+      }
+    }
 
-function reproducirSonidoCorrecto(){ play('correct'); }
-function reproducirSonidoError(){ play('error'); }
-function reproducirSonidoCompletado(){ play('completed'); }
-function reproducirSonidoVictoria(){ play('victory'); }
-function reproducirSonidoTap(){ play('tap'); }
+    /**
+     * Reproduce un sonido de efecto.
+     */
+    function play(name) {
+      if (isMuted) return;
+      const a = sounds[name];
+      if (!a) return;
+      try {
+        a.currentTime = 0;
+        const p = a.play();
+        if (p && p.catch) p.catch(err => console.warn('Reproducción de efecto fallida (no-fatal):', err));
+      } catch (e) {
+        console.warn('Audio play error:', e);
+      }
+    }
 
-/* --- Event Listeners --- */
+    function reproducirSonidoCorrecto() { play('correct'); }
+    function reproducirSonidoError() { play('error'); }
+    function reproducirSonidoCompletado() { play('completed'); }
+    function reproducirSonidoVictoria() { play('victory'); }
+    function reproducirSonidoTap() { play('tap'); }
 
-el('playBtn').addEventListener('click', ()=>{
-  userInteracted = true;
-  
-  // 1. Unlocked Audio
-  unlockAudio();
-  initializeEffectAudios();
-  reproducirSonidoTap();
+    /* --- Event Listeners --- */
 
-  // 2. Start Game
-  el('startScreen').classList.remove('active');
-  el('gameScreen').classList.add('active');
-  beginPlay();
-});
+    el('playBtn').addEventListener('click', () => {
+      userInteracted = true;
 
-el('backToMenuBtn').addEventListener('click', ()=>{
-  reproducirSonidoTap();
-  gotoStart();
-});
+      // 1. Unlocked Audio
+      unlockAudio();
+      initializeEffectAudios();
+      reproducirSonidoTap();
 
-el('helpBtn').addEventListener('click', ()=>{
-  reproducirSonidoTap();
-  el('helpModal').style.display='flex';
-});
-el('closeHelp').addEventListener('click', ()=>{
-  reproducirSonidoTap();
-  el('helpModal').style.display='none';
-});
-el('helpModal').addEventListener('click', (e)=>{
-  if(e.target===el('helpModal')) el('helpModal').style.display='none';
-});
+      // 2. Start Game
+      el('startScreen').classList.remove('active');
+      el('gameScreen').classList.add('active');
+      beginPlay();
+    });
 
-el('muteBtn').addEventListener('click', ()=>{
-  isMuted = !isMuted;
-  el('muteBtn').textContent = isMuted ? '🔇' : '🔊';
-  // Si está activado, reproduce un tap para confirmar
-  if (!isMuted && userInteracted) { reproducirSonidoTap(); }
-});
+    el('backToMenuBtn').addEventListener('click', () => {
+      reproducirSonidoTap();
+      gotoStart();
+    });
 
-// Ocultar el indicador de carga si el HTML lo dejaba visible.
-document.addEventListener('DOMContentLoaded', () => {
-    loadingIndicator.style.display = 'none';
-});
-</script>
+    el('helpBtn').addEventListener('click', () => {
+      reproducirSonidoTap();
+      el('helpModal').style.display = 'flex';
+    });
+    el('closeHelp').addEventListener('click', () => {
+      reproducirSonidoTap();
+      el('helpModal').style.display = 'none';
+    });
+    el('helpModal').addEventListener('click', (e) => {
+      if (e.target === el('helpModal')) el('helpModal').style.display = 'none';
+    });
+
+    el('muteBtn').addEventListener('click', () => {
+      isMuted = !isMuted;
+      el('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+      // Si está activado, reproduce un tap para confirmar
+      if (!isMuted && userInteracted) { reproducirSonidoTap(); }
+    });
+
+    // Ocultar el indicador de carga si el HTML lo dejaba visible.
+    document.addEventListener('DOMContentLoaded', () => {
+      loadingIndicator.style.display = 'none';
+    });
+    // Cargar el Hall of Fame al iniciar la página
+    document.addEventListener('DOMContentLoaded', () => {
+      loadingIndicator.style.display = 'none';
+      loadHallOfFame(); // Agregar esta línea
+    });
+  </script>
 </body>
+
 </html>
